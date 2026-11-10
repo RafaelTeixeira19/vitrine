@@ -1,0 +1,415 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<div style="font:500 13px/1.4 system-ui,-apple-system,Segoe UI,sans-serif;background:#16181d;color:#eceef2;padding:8px 16px;display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center"><a href="../../projets/sticker-scarcity.html" style="color:#ff8a72;text-decoration:none;font-weight:700">&larr; Back to portfolio</a><span style="opacity:.8">Frozen demo, copied on 10 Nov 2026: real data, no longer updated.</span></div>
+<title>Capsule Allocator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: same family as Capsule Split. Header, tab strip, one controls panel, then the allocation table
+   (inputs and results in one row per capsule), then a plain note on how each weight is built. */
+:root {
+  --bg: #eef0f4;
+  --surface: #ffffff;
+  --ink: #1b2130;
+  --muted: #5d6578;
+  --line: #d6dae3;
+  --accent: #b87a12;
+  --accent-ink: #ffffff;
+  --accent-soft: #f4e6c8;
+  --area: rgba(184, 122, 18, 0.14);
+  --bar-track: #e6e9ef;
+  --good: #2f7d4f;
+  --good-soft: #dcefe3;
+  --warn: #a8551f;
+  --warn-soft: #f6e3d6;
+  --display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #11141b; --surface: #191d27; --ink: #e6e8ee; --muted: #98a0b3; --line: #2b313e;
+    --accent: #e2a83d; --accent-ink: #1a1405; --accent-soft: #3a2f17; --area: rgba(226, 168, 61, 0.16);
+    --bar-track: #242a36; --good: #6cc391; --good-soft: #1b3326; --warn: #e59a66; --warn-soft: #3a2519;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #11141b; --surface: #191d27; --ink: #e6e8ee; --muted: #98a0b3; --line: #2b313e;
+  --accent: #e2a83d; --accent-ink: #1a1405; --accent-soft: #3a2f17; --area: rgba(226, 168, 61, 0.16);
+  --bar-track: #242a36; --good: #6cc391; --good-soft: #1b3326; --warn: #e59a66; --warn-soft: #3a2519;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--body); padding-inline: 16px; padding-block: 28px 48px; }
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 20px; min-width: 0; }
+header { display: grid; gap: 6px; }
+h1 { font: 700 30px/1.1 var(--display); letter-spacing: 0.01em; margin: 0; text-wrap: balance; }
+.lede { margin: 0; color: var(--muted); max-width: 68ch; }
+.meta { margin: 0; color: var(--muted); font: 12.5px/1.5 var(--mono); }
+h2 { font: 600 13px/1.3 var(--display); text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin: 0; }
+section { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; display: grid; gap: 16px; min-width: 0; }
+
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tabs button { font: 600 15px var(--display); letter-spacing: 0.03em; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 9px 16px; cursor: pointer; display: flex; gap: 10px; align-items: baseline; }
+.tabs button small { font: 400 12px var(--mono); color: var(--muted); }
+.tabs button[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.tabs button[aria-selected="true"] small { color: var(--accent-ink); }
+
+.controls { display: flex; flex-wrap: wrap; gap: 18px 28px; align-items: end; }
+.field { display: grid; gap: 6px; min-width: 0; }
+.label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.label b { font: 500 12px var(--mono); color: var(--ink); letter-spacing: 0; text-transform: none; margin-left: 4px; }
+input[type="text"] { font: 15px var(--mono); font-variant-numeric: tabular-nums; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; width: 100%; min-width: 0; }
+input:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.money { position: relative; width: 110px; }
+.money::before { content: "€"; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); font-family: var(--mono); }
+.money input { padding-left: 24px; }
+.seg { display: inline-flex; flex-wrap: wrap; max-width: 100%; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+.seg button { flex: 1 1 auto; font: 500 14px var(--body); background: var(--surface); color: var(--ink); border: 0; padding: 8px 13px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+input[type="range"] { width: 190px; max-width: 100%; accent-color: var(--accent); }
+.text-btn { font: 500 14px var(--body); background: transparent; color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; cursor: pointer; }
+.text-btn:hover { border-color: var(--accent); }
+.note { margin: 0; font-size: 13.5px; color: var(--muted); max-width: 78ch; }
+.note b { color: var(--ink); font-weight: 600; }
+
+.summary { display: flex; flex-wrap: wrap; gap: 12px 36px; }
+.stat { display: grid; gap: 2px; min-width: 0; }
+.stat .k { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.stat .v { font: 500 20px var(--mono); font-variant-numeric: tabular-nums; }
+
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 1040px; }
+th, td { padding: 9px 7px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { font-size: 11.5px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); white-space: nowrap; }
+td.n, th.n { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+tbody tr:last-child td { border-bottom: 0; }
+.cap { font-weight: 600; white-space: nowrap; }
+.cap span { display: block; font-weight: 400; font-size: 12.5px; color: var(--muted); }
+.tag { display: inline-block; font-size: 11px; letter-spacing: 0.03em; padding: 1px 7px; border-radius: 999px; background: var(--accent-soft); color: var(--warn); margin-top: 3px; }
+td .money { width: 92px; }
+td .money input { font-size: 14px; padding-block: 5px; }
+.up { color: var(--good); } .down { color: var(--warn); }
+.fx { display: inline-block; min-width: 54px; padding: 2px 7px; border-radius: 4px; font: 500 13px var(--mono); text-align: right; }
+.fx.hi { background: var(--good-soft); color: var(--good); }
+.fx.lo { background: var(--warn-soft); color: var(--warn); }
+.fx.eq { color: var(--muted); }
+.pct-cell { display: grid; grid-template-columns: 52px 110px; align-items: center; gap: 8px; }
+.pct-val { font: 500 15px var(--mono); text-align: right; font-variant-numeric: tabular-nums; }
+.bar { height: 8px; background: var(--bar-track); border-radius: 4px; overflow: hidden; }
+.bar span { display: block; height: 100%; background: var(--accent); border-radius: 0 4px 4px 0; }
+.buy { font-weight: 600; font-size: 16px; }
+svg.spark { display: block; width: 120px; height: 34px; overflow: visible; }
+.spark .ln { fill: none; stroke: var(--accent); stroke-width: 1.6; stroke-linejoin: round; }
+.spark .ar { fill: var(--area); stroke: none; }
+.spark .md { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+.spark .end { fill: var(--accent); stroke: var(--surface); stroke-width: 2; }
+
+.how { display: grid; gap: 10px; }
+.how p { margin: 0; max-width: 78ch; }
+.how code { font: 13px var(--mono); background: var(--bg); padding: 1px 5px; border-radius: 4px; }
+
+@media (max-width: 560px) {
+  h1 { font-size: 25px; }
+  section { padding: 16px; }
+  .controls { gap: 16px; }
+}
+@media (prefers-reduced-motion: no-preference) { .bar span { transition: width 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Capsule Allocator</h1>
+    <p class="lede">Splits a long-hold capsule budget using each capsule's price trend on Steam and how fast its stickers are being used up. Prices are editable; the split updates as you type.</p>
+    <p class="meta" id="meta"></p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Capsule set" id="tabs"></nav>
+
+  <section aria-labelledby="set-h">
+    <h2 id="set-h">Settings</h2>
+    <div class="controls">
+      <div class="field">
+        <label class="label" for="budget">Budget for this tab</label>
+        <div class="money"><input id="budget" type="text" inputmode="decimal"></div>
+      </div>
+      <div class="field">
+        <span class="label" id="tilt-l">Tilt toward cheap</span>
+        <div class="seg" role="group" aria-labelledby="tilt-l" id="tilt">
+          <button type="button" data-v="gentle">Gentle</button>
+          <button type="button" data-v="strong">Strong</button>
+          <button type="button" data-v="equal">Equal €</button>
+        </div>
+      </div>
+      <div class="field">
+        <span class="label" id="mode-l">Trend reading</span>
+        <div class="seg" role="group" aria-labelledby="mode-l" id="mode">
+          <button type="button" data-v="dip">Buy the dip</button>
+          <button type="button" data-v="mom">Follow momentum</button>
+          <button type="button" data-v="brake">Dip with brake</button>
+        </div>
+      </div>
+      <div class="field">
+        <label class="label" for="st">Trend strength <b id="st-v"></b></label>
+        <input id="st" type="range" min="0" max="2" step="0.1">
+      </div>
+      <div class="field">
+        <label class="label" for="ss">Scarcity strength <b id="ss-v"></b></label>
+        <input id="ss" type="range" min="0" max="2" step="0.1">
+      </div>
+      <button type="button" class="text-btn" id="reset">Reset prices to Steam data</button>
+    </div>
+    <p class="note" id="mode-note"></p>
+  </section>
+
+  <section aria-labelledby="out-h">
+    <h2 id="out-h">How to split the budget</h2>
+    <div class="summary" id="summary"></div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Capsule</th>
+            <th>Last 12 months</th>
+            <th class="n">Price each</th>
+            <th class="n">30 d</th>
+            <th class="n">90 d</th>
+            <th class="n">Days of supply</th>
+            <th class="n">Trend</th>
+            <th class="n">Scarcity</th>
+            <th>Share of budget</th>
+            <th class="n">Buy</th>
+            <th class="n">Cost</th>
+            <th class="n">Break-even</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <p class="note">"Buy" rounds to whole capsules, then spends what is left on the capsule furthest below its target. Break-even is the Steam listing price at which a sale gives back what you paid, after Steam's 15% fee.</p>
+  </section>
+
+  <section aria-labelledby="how-h" class="how">
+    <h2 id="how-h">How each weight is built</h2>
+    <p><b>Weight = tilt × trend × scarcity</b>, then each capsule gets its weight's share of the budget.</p>
+    <p><b>Tilt</b> is the old rule: Gentle gives <code>1/√price</code>, Strong gives <code>1/price</code>, Equal € gives every capsule the same money.</p>
+    <p><b>Trend</b> compares the last Steam sale with a reference price, as a log ratio so a rise and a fall of the same size count the same. Buy the dip uses the median price of the past year (since release for younger capsules). Follow momentum uses the price 90 days ago. Dip with brake takes the dip reading and removes any fall of the last 30 days.</p>
+    <p><b>Scarcity</b> is the consumption pace from the Major Sticker Scarcity study, per capsule: the stickers of that capsule on sale today on 9 markets plus its sealed capsules on sale, divided by how many of its stickers were applied to guns per day over the last 30 days. Fewer days of supply means the market is being used up faster. Each capsule is compared with the median of <span id="med-days"></span> days. Rio 2022 has no public application data, so its three capsules sit at the median (×1.00).</p>
+    <p>Each factor is <code>e<sup>strength × score</sup></code>, kept between ×0.33 and ×3 so one signal can never wipe out or swamp a capsule. Strength 0 switches a factor off; both at 0 with Gentle gives the old Capsule Split result.</p>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var DATA = {"built":"2026-10-23T14:30Z","prices_at":1792397995,"scarcity_at":{"steam":"2026-10-19T10:40:04+00:00","steamdt":"2026-10-19T12:13:11+00:00","csgoskins":null,"feeds":"2026-10-19T09:50:03+00:00","tracker":"2026-10-19T08:30:13.935000+00:00"},"med_days":121.9,"tabs":[{"id":"legends","name":"Legends","budget":10,"items":["Antwerp 2022 Legends Sticker Capsule","Rio 2022 Legends Sticker Capsule","Paris 2023 Legends Sticker Capsule","Copenhagen 2024 Legends Sticker Capsule","Shanghai 2024 Legends Sticker Capsule"]},{"id":"others","name":"Others","budget":10,"items":["Austin 2025 Legends Sticker Capsule","Austin 2025 Challengers Sticker Capsule","Austin 2025 Contenders Sticker Capsule","Budapest 2025 Legends Sticker Capsule","Budapest 2025 Challengers Sticker Capsule","Budapest 2025 Contenders Sticker Capsule","Antwerp 2022 Challengers Sticker Capsule","Antwerp 2022 Contenders Sticker Capsule","Rio 2022 Challengers Sticker Capsule","Rio 2022 Contenders Sticker Capsule","Paris 2023 Challengers Sticker Capsule","Paris 2023 Contenders Sticker Capsule","Copenhagen 2024 Challengers Sticker Capsule","Copenhagen 2024 Contenders Sticker Capsule","Shanghai 2024 Challengers Sticker Capsule","Shanghai 2024 Contenders Sticker Capsule"]},{"id":"all","name":"All","budget":20,"items":["Antwerp 2022 Legends Sticker Capsule","Rio 2022 Legends Sticker Capsule","Paris 2023 Legends Sticker Capsule","Copenhagen 2024 Legends Sticker Capsule","Shanghai 2024 Legends Sticker Capsule","Austin 2025 Legends Sticker Capsule","Austin 2025 Challengers Sticker Capsule","Austin 2025 Contenders Sticker Capsule","Budapest 2025 Legends Sticker Capsule","Budapest 2025 Challengers Sticker Capsule","Budapest 2025 Contenders Sticker Capsule","Antwerp 2022 Challengers Sticker Capsule","Antwerp 2022 Contenders Sticker Capsule","Rio 2022 Challengers Sticker Capsule","Rio 2022 Contenders Sticker Capsule","Paris 2023 Challengers Sticker Capsule","Paris 2023 Contenders Sticker Capsule","Copenhagen 2024 Challengers Sticker Capsule","Copenhagen 2024 Contenders Sticker Capsule","Shanghai 2024 Challengers Sticker Capsule","Shanghai 2024 Contenders Sticker Capsule"]}],"caps":[{"name":"Antwerp 2022 Legends Sticker Capsule","major":"Antwerp 2022","tier":"Legends","ask":0.34,"last":0.3535,"last_t":1792389600,"p30":0.4473,"p90":0.5349,"p365":0.8187,"med":0.6273,"med_days":365,"spark":[0.8187,0.5583,0.6518,0.631,0.7169,0.6518,0.6644,0.6155,0.5621,0.6008,0.6563,0.6555,0.6125,0.6449,0.6418,0.6494,0.6358,0.6064,0.6123,0.6511,0.6303,0.5739,0.5925,0.6684,0.7075,0.6748,0.6489,0.6475,0.662,0.6567,0.6291,0.822,0.6912,0.6814,0.6583,0.6587,0.6273,0.5546,0.5522,0.5277,0.525,0.5157,0.5117,0.5092,0.4448,0.477,0.5711,0.4838,0.4388,0.4022,0.4151,0.4053,0.3628,0.3535],"steam":"https://steamcommunity.com/market/listings/730/G18E0253004","scar":{"listed":86690,"sealed":33773.0,"supply":120463.0,"burn30":43976,"n":32,"days":82.2},"score":{"dip":0.5735,"mom":-0.4142,"brake":0.3382,"scar":0.3945}},{"name":"Rio 2022 Legends Sticker Capsule","major":"Rio 2022","tier":"Legends","ask":0.31,"last":0.295,"last_t":1792389600,"p30":0.3284,"p90":0.3488,"p365":0.4334,"med":0.3269,"med_days":365,"spark":[0.4334,0.3565,0.3855,0.3937,0.3559,0.3268,0.3277,0.3105,0.3294,0.3287,0.3605,0.3328,0.327,0.3391,0.3268,0.3036,0.2939,0.3001,0.3129,0.2831,0.2727,0.2696,0.2906,0.2982,0.3262,0.3858,0.3014,0.3496,0.3292,0.2831,0.3274,0.4176,0.4157,0.3653,0.364,0.3807,0.3687,0.3656,0.3243,0.346,0.3441,0.3556,0.3252,0.3384,0.3337,0.3252,0.3219,0.3423,0.3326,0.292,0.2886,0.2959,0.3129,0.295],"steam":"https://steamcommunity.com/market/listings/730/G18F9253004","scar":null,"score":{"dip":0.1027,"mom":-0.1675,"brake":-0.0046,"scar":0.0}},{"name":"Paris 2023 Legends Sticker Capsule","major":"Paris 2023","tier":"Legends","ask":0.1,"last":0.0946,"last_t":1792389600,"p30":0.1124,"p90":0.1267,"p365":0.1627,"med":0.1373,"med_days":365,"spark":[0.1627,0.1363,0.1605,0.1645,0.1581,0.1554,0.1499,0.1462,0.1442,0.1409,0.1401,0.1425,0.1475,0.1413,0.1378,0.1313,0.1273,0.126,0.1256,0.124,0.1247,0.1246,0.1409,0.1373,0.1397,0.1378,0.1431,0.147,0.1456,0.1431,0.1424,0.2202,0.1809,0.1512,0.1516,0.138,0.1416,0.1318,0.1285,0.1278,0.1267,0.128,0.1242,0.1206,0.1183,0.1159,0.117,0.1118,0.1096,0.1097,0.1024,0.1026,0.0971,0.0946],"steam":"https://steamcommunity.com/market/listings/730/G189A263004","scar":{"listed":872948,"sealed":309717.0,"supply":1182665.0,"burn30":196182,"n":32,"days":180.9},"score":{"dip":0.3725,"mom":-0.2922,"brake":0.2001,"scar":-0.3943}},{"name":"Copenhagen 2024 Legends Sticker Capsule","major":"Copenhagen 2024","tier":"Legends","ask":0.41,"last":0.4271,"last_t":1792378800,"p30":0.4516,"p90":0.5322,"p365":0.5596,"med":0.5229,"med_days":365,"spark":[0.5596,0.4447,0.5,0.4961,0.4845,0.4873,0.4943,0.5007,0.4784,0.4948,0.5249,0.5522,0.5327,0.5441,0.4816,0.5076,0.5171,0.5319,0.4966,0.5773,0.5549,0.5192,0.53,0.5231,0.5924,0.6337,0.596,0.5976,0.5685,0.6085,0.6212,0.7847,0.6894,0.6052,0.6909,0.5907,0.5569,0.5736,0.5919,0.5067,0.5336,0.482,0.5229,0.465,0.465,0.4087,0.4507,0.4247,0.4401,0.439,0.4459,0.3784,0.418,0.4271],"steam":"https://steamcommunity.com/market/listings/730/G18BB263004","scar":{"listed":60514,"sealed":13269.0,"supply":73783.0,"burn30":125749,"n":32,"days":17.6},"score":{"dip":0.2024,"mom":-0.22,"brake":0.1466,"scar":1.9357}},{"name":"Shanghai 2024 Legends Sticker Capsule","major":"Shanghai 2024","tier":"Legends","ask":0.78,"last":0.78,"last_t":1792389600,"p30":0.8279,"p90":1.0459,"p365":0.6262,"med":0.8318,"med_days":365,"spark":[0.6262,0.5115,0.6201,0.5652,0.5778,0.6239,0.5938,0.5682,0.5212,0.4901,0.538,0.542,0.5207,0.5404,0.5118,0.5384,0.4849,0.5151,0.6498,0.9149,0.9572,0.9286,0.8362,0.8161,0.8942,0.9238,0.9011,0.8127,0.8113,0.8247,0.8248,1.3189,1.339,1.496,1.3811,1.2468,1.2359,1.0185,0.8933,1.0808,1.0592,1.0724,1.1199,1.0605,0.9777,0.9501,1.065,0.8785,0.8329,0.7344,0.7094,0.6668,0.7136,0.78],"steam":"https://steamcommunity.com/market/listings/730/G18E4263004","scar":{"listed":88854,"sealed":12522.0,"supply":101376.0,"burn30":51697,"n":32,"days":58.8},"score":{"dip":0.0643,"mom":-0.2933,"brake":0.0047,"scar":0.7295}},{"name":"Austin 2025 Legends Sticker Capsule","major":"Austin 2025","tier":"Legends","ask":0.18,"last":0.18,"last_t":1792389600,"p30":0.2127,"p90":0.2676,"p365":0.4518,"med":0.2974,"med_days":365,"spark":[0.4518,0.4082,0.4521,0.4095,0.3926,0.3878,0.3636,0.3543,0.322,0.3451,0.3542,0.3332,0.3433,0.3413,0.3231,0.3102,0.3033,0.2841,0.274,0.2906,0.2872,0.2931,0.2901,0.3075,0.2975,0.3125,0.3206,0.2953,0.2905,0.294,0.2783,0.3438,0.3264,0.314,0.3218,0.316,0.2913,0.2659,0.2542,0.2722,0.2509,0.2428,0.2376,0.221,0.2185,0.209,0.214,0.2357,0.2093,0.2167,0.2003,0.1799,0.1776,0.18],"steam":"https://steamcommunity.com/market/listings/730/G18FD273004","scar":{"listed":219402,"sealed":80336.0,"supply":299738.0,"burn30":73232,"n":32,"days":122.8},"score":{"dip":0.5021,"mom":-0.3965,"brake":0.3352,"scar":-0.0069}},{"name":"Austin 2025 Challengers Sticker Capsule","major":"Austin 2025","tier":"Challengers","ask":0.18,"last":0.19,"last_t":1792389600,"p30":0.2159,"p90":0.2894,"p365":0.5447,"med":0.3417,"med_days":365,"spark":[0.5447,0.4682,0.5487,0.4739,0.4541,0.4504,0.4064,0.3912,0.368,0.3787,0.378,0.392,0.3628,0.3589,0.3315,0.3313,0.3416,0.3378,0.3218,0.3387,0.3476,0.3244,0.3283,0.3438,0.3991,0.3718,0.3528,0.3328,0.3404,0.3578,0.3459,0.4101,0.3596,0.3571,0.3349,0.3472,0.3455,0.2954,0.2809,0.2859,0.2938,0.2765,0.2591,0.2498,0.2444,0.2299,0.2295,0.2377,0.2131,0.1977,0.1881,0.18,0.1868,0.19],"steam":"https://steamcommunity.com/market/listings/730/G18FE273004","scar":{"listed":105427,"sealed":42737.0,"supply":148164.0,"burn30":48045,"n":32,"days":92.5},"score":{"dip":0.5869,"mom":-0.4208,"brake":0.4591,"scar":0.2764}},{"name":"Austin 2025 Contenders Sticker Capsule","major":"Austin 2025","tier":"Contenders","ask":0.2,"last":0.2047,"last_t":1792382400,"p30":0.2196,"p90":0.307,"p365":0.6272,"med":0.4029,"med_days":365,"spark":[0.6272,0.5527,0.675,0.5724,0.5794,0.5553,0.4817,0.4836,0.3889,0.4251,0.4405,0.4323,0.412,0.4127,0.3774,0.4043,0.4137,0.3984,0.3824,0.4229,0.5211,0.4673,0.423,0.4176,0.4459,0.4222,0.4238,0.4189,0.4087,0.377,0.3665,0.4547,0.3932,0.4081,0.3927,0.3382,0.3465,0.3259,0.3019,0.3111,0.3025,0.2962,0.2698,0.2636,0.2269,0.2195,0.2608,0.2493,0.2066,0.2138,0.2038,0.1948,0.1802,0.2047],"steam":"https://steamcommunity.com/market/listings/730/G18FF273004","scar":{"listed":156821,"sealed":53327.0,"supply":210148.0,"burn30":38143,"n":64,"days":165.3},"score":{"dip":0.6771,"mom":-0.4053,"brake":0.6069,"scar":-0.3042}},{"name":"Budapest 2025 Legends Sticker Capsule","major":"Budapest 2025","tier":"Legends","ask":0.17,"last":0.1691,"last_t":1792389600,"p30":0.2004,"p90":0.2499,"p365":null,"med":0.2568,"med_days":333,"spark":[0.9539,0.7423,0.6607,0.5867,0.4745,0.4036,0.43,0.3872,0.3845,0.3878,0.2936,0.2594,0.2577,0.2556,0.2567,0.2532,0.2594,0.2641,0.2708,0.2589,0.2715,0.2749,0.2619,0.2604,0.2486,0.228,0.2357,0.2743,0.2749,0.258,0.2549,0.2609,0.253,0.2532,0.2511,0.2492,0.2403,0.2317,0.2306,0.2101,0.2089,0.2044,0.2013,0.1977,0.1987,0.1791,0.1649,0.1633,0.1691],"steam":"https://steamcommunity.com/market/listings/730/G18E0283004","scar":{"listed":350050,"sealed":74955.0,"supply":425005.0,"burn30":71878,"n":32,"days":177.4},"score":{"dip":0.4178,"mom":-0.3906,"brake":0.248,"scar":-0.3748}},{"name":"Budapest 2025 Challengers Sticker Capsule","major":"Budapest 2025","tier":"Challengers","ask":0.15,"last":0.1511,"last_t":1792389600,"p30":0.175,"p90":0.2111,"p365":null,"med":0.2571,"med_days":333,"spark":[0.9364,0.7794,0.5273,0.4508,0.4933,0.4544,0.5558,0.4463,0.444,0.414,0.2982,0.2605,0.2577,0.2579,0.2577,0.2544,0.2583,0.2586,0.2968,0.3088,0.303,0.3134,0.2958,0.2832,0.2527,0.2316,0.2363,0.2563,0.2578,0.2505,0.222,0.2145,0.2149,0.2114,0.2136,0.2045,0.2099,0.2037,0.1935,0.1793,0.1694,0.17,0.1827,0.1749,0.1699,0.1647,0.1555,0.1542,0.1511],"steam":"https://steamcommunity.com/market/listings/730/G18E1283004","scar":{"listed":225603,"sealed":74649.0,"supply":300252.0,"burn30":46497,"n":32,"days":193.7},"score":{"dip":0.5315,"mom":-0.3344,"brake":0.3847,"scar":-0.4627}},{"name":"Budapest 2025 Contenders Sticker Capsule","major":"Budapest 2025","tier":"Contenders","ask":0.12,"last":0.1157,"last_t":1792389600,"p30":0.1489,"p90":0.1948,"p365":null,"med":0.2344,"med_days":333,"spark":[0.9535,0.7517,0.6035,0.4742,0.5945,0.5694,0.6044,0.5602,0.5921,0.5199,0.316,0.2647,0.2602,0.2569,0.2593,0.2558,0.2557,0.2317,0.2478,0.2467,0.2498,0.2595,0.2462,0.2371,0.2241,0.1948,0.19,0.2153,0.2332,0.2205,0.2246,0.2027,0.1928,0.195,0.1956,0.2007,0.1994,0.1858,0.1786,0.1684,0.1572,0.1619,0.154,0.1483,0.1402,0.1352,0.1261,0.1246,0.1157],"steam":"https://steamcommunity.com/market/listings/730/G18E2283004","scar":{"listed":530898,"sealed":166863.0,"supply":697761.0,"burn30":99320,"n":64,"days":210.8},"score":{"dip":0.706,"mom":-0.521,"brake":0.4538,"scar":-0.5473}},{"name":"Antwerp 2022 Challengers Sticker Capsule","major":"Antwerp 2022","tier":"Challengers","ask":0.26,"last":0.2597,"last_t":1792382400,"p30":0.2786,"p90":0.3261,"p365":0.4974,"med":0.3803,"med_days":365,"spark":[0.4974,0.3522,0.4487,0.434,0.4378,0.4102,0.4128,0.3925,0.3833,0.3588,0.3764,0.3834,0.3815,0.4091,0.4039,0.4095,0.365,0.3776,0.3656,0.3731,0.3761,0.3662,0.3597,0.3821,0.4005,0.4462,0.4474,0.4107,0.4088,0.419,0.358,0.4282,0.4307,0.4458,0.4337,0.4097,0.3882,0.3679,0.3529,0.3352,0.3218,0.3126,0.3282,0.312,0.3091,0.2973,0.2984,0.2932,0.2834,0.253,0.2628,0.2486,0.2508,0.2597],"steam":"https://steamcommunity.com/market/listings/730/G18E1253004","scar":{"listed":56223,"sealed":34502.0,"supply":90725.0,"burn30":20278,"n":32,"days":134.2},"score":{"dip":0.3814,"mom":-0.2277,"brake":0.3112,"scar":-0.0957}},{"name":"Antwerp 2022 Contenders Sticker Capsule","major":"Antwerp 2022","tier":"Contenders","ask":0.39,"last":0.41,"last_t":1792389600,"p30":0.5423,"p90":0.5699,"p365":0.9441,"med":0.6894,"med_days":365,"spark":[0.9441,0.6839,0.8211,0.7871,0.829,0.7235,0.7399,0.673,0.6898,0.6658,0.721,0.7447,0.7122,0.6977,0.6896,0.7406,0.7277,0.7001,0.6583,0.7046,0.6786,0.6688,0.6866,0.7042,0.7467,0.7721,0.7455,0.7585,0.7264,0.7338,0.689,0.7644,0.7147,0.709,0.7074,0.7028,0.6626,0.6277,0.5867,0.5916,0.5668,0.613,0.6533,0.5604,0.5318,0.5611,0.5796,0.5382,0.5427,0.4559,0.4526,0.4556,0.3983,0.41],"steam":"https://steamcommunity.com/market/listings/730/G18E2253004","scar":{"listed":60440,"sealed":46436.0,"supply":106876.0,"burn30":10968,"n":32,"days":292.3},"score":{"dip":0.5197,"mom":-0.3293,"brake":0.24,"scar":-0.8742}},{"name":"Rio 2022 Challengers Sticker Capsule","major":"Rio 2022","tier":"Challengers","ask":0.2,"last":0.2101,"last_t":1792389600,"p30":0.227,"p90":0.2839,"p365":0.3649,"med":0.2817,"med_days":365,"spark":[0.3649,0.3024,0.3662,0.3533,0.3268,0.3148,0.3104,0.3111,0.2905,0.2851,0.2946,0.2875,0.2871,0.2887,0.2718,0.2624,0.2489,0.2583,0.24,0.2436,0.238,0.2319,0.2425,0.2638,0.2608,0.281,0.2725,0.2828,0.3078,0.2838,0.3025,0.358,0.3697,0.3448,0.337,0.3305,0.2895,0.2902,0.2682,0.2814,0.2903,0.2677,0.2487,0.269,0.2462,0.241,0.2523,0.2359,0.22,0.2048,0.2157,0.2231,0.2132,0.2101],"steam":"https://steamcommunity.com/market/listings/730/G18FA253004","scar":null,"score":{"dip":0.2933,"mom":-0.301,"brake":0.2159,"scar":0.0}},{"name":"Rio 2022 Contenders Sticker Capsule","major":"Rio 2022","tier":"Contenders","ask":0.25,"last":0.2492,"last_t":1792393200,"p30":0.3245,"p90":0.4902,"p365":0.4013,"med":0.3172,"med_days":365,"spark":[0.4013,0.3279,0.3749,0.3651,0.3287,0.3255,0.327,0.3091,0.2988,0.2934,0.3004,0.3141,0.2914,0.2878,0.2804,0.2802,0.2665,0.2659,0.2497,0.2146,0.2426,0.2616,0.2777,0.2839,0.2973,0.2969,0.297,0.3459,0.3758,0.3139,0.4077,0.4498,0.6476,0.5122,0.4776,0.6755,0.5305,0.484,0.4394,0.5068,0.4623,0.4313,0.4202,0.4322,0.3871,0.3609,0.3419,0.3336,0.3087,0.2601,0.235,0.219,0.2383,0.2492],"steam":"https://steamcommunity.com/market/listings/730/G18FB253004","scar":null,"score":{"dip":0.2413,"mom":-0.6766,"brake":-0.0228,"scar":0.0}},{"name":"Paris 2023 Challengers Sticker Capsule","major":"Paris 2023","tier":"Challengers","ask":0.09,"last":0.1188,"last_t":1792389600,"p30":0.0903,"p90":0.1132,"p365":0.1325,"med":0.1121,"med_days":365,"spark":[0.1325,0.1189,0.1288,0.1409,0.1328,0.1291,0.1188,0.1203,0.1182,0.1073,0.1108,0.1161,0.1158,0.1157,0.1121,0.1054,0.105,0.1044,0.1054,0.1032,0.0996,0.1041,0.1086,0.1153,0.1123,0.1184,0.1148,0.1199,0.1117,0.1103,0.1145,0.1672,0.1482,0.1286,0.1235,0.1196,0.1135,0.1121,0.1096,0.1123,0.1111,0.1057,0.1048,0.1006,0.0959,0.0974,0.0972,0.0963,0.0919,0.0911,0.0904,0.0891,0.0863,0.1188],"steam":"https://steamcommunity.com/market/listings/730/G189B263004","scar":{"listed":502111,"sealed":169474.0,"supply":671585.0,"burn30":166320,"n":32,"days":121.1},"score":{"dip":-0.0581,"mom":0.0483,"brake":-0.0581,"scar":0.007}},{"name":"Paris 2023 Contenders Sticker Capsule","major":"Paris 2023","tier":"Contenders","ask":0.09,"last":0.089,"last_t":1792389600,"p30":0.0902,"p90":0.1088,"p365":0.1317,"med":0.1091,"med_days":365,"spark":[0.1317,0.1168,0.1265,0.1366,0.1308,0.1263,0.1185,0.1188,0.112,0.1066,0.109,0.1117,0.1154,0.1131,0.1099,0.1049,0.104,0.1046,0.1041,0.1027,0.1024,0.1027,0.1083,0.1132,0.1127,0.115,0.1141,0.1163,0.1151,0.1125,0.1119,0.1677,0.1364,0.1219,0.1191,0.1148,0.1126,0.1102,0.1089,0.1089,0.1068,0.1065,0.1042,0.0974,0.0971,0.0951,0.0952,0.0928,0.0913,0.0914,0.0903,0.0875,0.0837,0.089],"steam":"https://steamcommunity.com/market/listings/730/G189C263004","scar":{"listed":1478592,"sealed":435212.0,"supply":1913804.0,"burn30":293220,"n":32,"days":195.8},"score":{"dip":0.2036,"mom":-0.2009,"brake":0.1902,"scar":-0.4735}},{"name":"Copenhagen 2024 Challengers Sticker Capsule","major":"Copenhagen 2024","tier":"Challengers","ask":0.54,"last":0.542,"last_t":1792393200,"p30":0.541,"p90":0.6089,"p365":0.6927,"med":0.7163,"med_days":365,"spark":[0.6927,0.4807,0.6721,0.6326,0.6557,0.7979,0.8779,0.8587,0.7725,0.7749,0.9565,0.8828,0.8274,0.888,0.7956,0.7931,0.8536,0.8432,0.7639,0.8137,0.8004,0.6867,0.7117,0.7445,0.7087,0.7475,0.6863,0.7046,0.6812,0.7086,0.6897,0.8708,0.7382,0.852,0.826,0.718,0.6989,0.7825,0.7117,0.558,0.6726,0.6571,0.6265,0.6398,0.6056,0.5382,0.5834,0.6122,0.5409,0.5381,0.5054,0.4879,0.5235,0.542],"steam":"https://steamcommunity.com/market/listings/730/G18BC263004","scar":{"listed":48474,"sealed":11086.0,"supply":59560.0,"burn30":84315,"n":32,"days":21.2},"score":{"dip":0.2788,"mom":-0.1164,"brake":0.2788,"scar":1.7496}},{"name":"Copenhagen 2024 Contenders Sticker Capsule","major":"Copenhagen 2024","tier":"Contenders","ask":0.3,"last":0.3049,"last_t":1792389600,"p30":0.3782,"p90":0.4071,"p365":0.6954,"med":0.563,"med_days":365,"spark":[0.6954,0.528,0.6191,0.5752,0.7598,0.7516,0.7112,0.722,0.6077,0.6151,0.6889,0.6949,0.6707,0.7004,0.6649,0.6693,0.6342,0.645,0.6418,0.6124,0.6348,0.5756,0.5588,0.5586,0.5558,0.5752,0.5689,0.5676,0.5383,0.5182,0.5098,0.6232,0.6097,0.58,0.5576,0.5386,0.4583,0.4794,0.4549,0.4288,0.4009,0.402,0.3925,0.3565,0.3187,0.3357,0.3147,0.3753,0.3541,0.3761,0.3337,0.2934,0.3023,0.3049],"steam":"https://steamcommunity.com/market/listings/730/G18BD263004","scar":{"listed":108568,"sealed":24189.0,"supply":132757.0,"burn30":82643,"n":32,"days":48.2},"score":{"dip":0.6133,"mom":-0.2891,"brake":0.3979,"scar":0.9283}},{"name":"Shanghai 2024 Challengers Sticker Capsule","major":"Shanghai 2024","tier":"Challengers","ask":0.4,"last":0.425,"last_t":1792389600,"p30":0.4702,"p90":0.6256,"p365":0.5844,"med":0.6107,"med_days":365,"spark":[0.5844,0.4756,0.5379,0.5169,0.5697,0.6102,0.564,0.5409,0.4924,0.4902,0.6069,0.6514,0.6431,0.6474,0.5913,0.5505,0.5797,0.6328,0.6175,0.6851,0.6706,0.6245,0.6168,0.6567,0.6835,0.6912,0.6721,0.6612,0.5952,0.6911,0.687,0.8243,0.6963,0.7053,0.6821,0.7598,0.7214,0.6734,0.6596,0.6288,0.5983,0.5694,0.5627,0.5945,0.5344,0.5103,0.553,0.4705,0.4265,0.3942,0.3513,0.3807,0.3936,0.425],"steam":"https://steamcommunity.com/market/listings/730/G18E5263004","scar":{"listed":19838,"sealed":7848.0,"supply":27686.0,"burn30":16335,"n":32,"days":50.8},"score":{"dip":0.3625,"mom":-0.3866,"brake":0.2614,"scar":0.8757}},{"name":"Shanghai 2024 Contenders Sticker Capsule","major":"Shanghai 2024","tier":"Contenders","ask":0.41,"last":0.4271,"last_t":1792386000,"p30":0.5274,"p90":0.7667,"p365":0.9402,"med":0.9103,"med_days":365,"spark":[0.9402,0.7444,0.9103,0.8106,0.9847,0.873,0.8185,0.7768,0.7099,0.6482,0.9068,0.9413,0.8897,1.0372,1.005,1.0093,0.9538,1.0018,1.2463,1.3968,1.4061,1.0501,0.9513,0.9613,0.9584,1.0342,1.0138,1.0333,1.1655,1.1656,1.2245,1.4559,1.1212,1.1833,1.1537,1.0908,0.9906,0.8846,0.8424,0.7692,0.7995,0.7048,0.6547,0.6165,0.5836,0.5711,0.5899,0.5469,0.5291,0.4684,0.4404,0.4457,0.438,0.4271],"steam":"https://steamcommunity.com/market/listings/730/G18E6263004","scar":{"listed":59298,"sealed":19218.0,"supply":78516.0,"burn30":35513,"n":32,"days":66.3},"score":{"dip":0.7568,"mom":-0.5851,"brake":0.5458,"scar":0.6094}}]};
+  var KEY = "capsule-allocator-v1";
+  var MAJORS = ["Antwerp 2022", "Rio 2022", "Paris 2023", "Copenhagen 2024", "Shanghai 2024", "Austin 2025", "Budapest 2025"];
+  var TIERS = ["Legends", "Challengers", "Contenders"];
+  var NOTES = {
+    dip: "Buy the dip: a capsule selling below its median price of the past year gets more weight, one selling above it gets less.",
+    mom: "Follow momentum: a capsule that held its price over the last 90 days gets more weight than one that kept falling.",
+    brake: "Dip with brake: the dip bonus, minus any fall over the last 30 days. A capsule that is cheap but still sliding gets a smaller bonus."
+  };
+  var BY = {};
+  DATA.caps.forEach(function (c) { BY[c.name] = c; });
+
+  var state = { tab: "legends", budgets: {}, tilt: "gentle", mode: "brake", st: 1, ss: 1, prices: {} };
+  try {
+    var saved = JSON.parse(localStorage.getItem(KEY));
+    if (saved && typeof saved === "object") Object.keys(state).forEach(function (k) { if (saved[k] != null) state[k] = saved[k]; });
+  } catch (e) {}
+  if (!DATA.tabs.some(function (t) { return t.id === state.tab; })) state.tab = DATA.tabs[0].id;
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  function $(id) { return document.getElementById(id); }
+  function num(s) { var v = parseFloat(String(s == null ? "" : s).replace(",", ".").replace("€", "").trim()); return isFinite(v) ? v : NaN; }
+  function eur(v) { return "€" + v.toFixed(2); }
+  function price(v) { return "€" + v.toFixed(v < 0.1 ? 3 : 2); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function short(n) { return n.replace(" Sticker Capsule", ""); }
+  function pct(a, b) {
+    if (b == null) return '<span class="na">n/a</span>';
+    var v = (a / b - 1) * 100, s = Math.abs(v) < 0.05 ? "0%" : (v > 0 ? "+" : "−") + Math.abs(v).toFixed(0) + "%";
+    return '<span class="' + (v > 0.5 ? "up" : v < -0.5 ? "down" : "") + '">' + s + "</span>";
+  }
+  function tab() { return DATA.tabs.filter(function (t) { return t.id === state.tab; })[0]; }
+  function budgetOf(t) { return state.budgets[t.id] != null ? state.budgets[t.id] : String(t.budget); }
+  function capsOf(t) {
+    return t.items.map(function (n) { return BY[n]; }).sort(function (a, b) {
+      return MAJORS.indexOf(a.major) - MAJORS.indexOf(b.major) || TIERS.indexOf(a.tier) - TIERS.indexOf(b.tier);
+    });
+  }
+  function priceOf(c) { var o = state.prices[c.name]; var v = num(o); return o != null && v > 0 ? v : c.ask; }
+  function factor(strength, score) { return Math.min(3, Math.max(1 / 3, Math.exp(strength * score))); }
+
+  function spark(c) {
+    var pts = c.spark, W = 120, H = 34, pad = 3;
+    var lo = Math.min.apply(null, pts.concat(c.med)), hi = Math.max.apply(null, pts.concat(c.med));
+    var span = hi - lo || 1;
+    var x = function (i) { return (i / (pts.length - 1)) * W; };
+    var y = function (v) { return pad + (1 - (v - lo) / span) * (H - 2 * pad); };
+    var line = pts.map(function (v, i) { return (i ? "L" : "M") + x(i).toFixed(1) + "," + y(v).toFixed(1); }).join("");
+    var area = line + "L" + W + "," + H + "L0," + H + "Z";
+    var title = short(c.name) + ": " + price(pts[0]) + " " + (c.med_days >= 365 ? "a year ago" : "at release") +
+      ", " + price(c.last) + " last sale, median " + price(c.med) + " (dashed line)";
+    return '<svg class="spark" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + esc(title) + '"><title>' + esc(title) + "</title>" +
+      '<path class="ar" d="' + area + '"/><line class="md" x1="0" x2="' + W + '" y1="' + y(c.med).toFixed(1) + '" y2="' + y(c.med).toFixed(1) + '"/>' +
+      '<path class="ln" d="' + line + '"/><circle class="end" r="3" cx="' + W + '" cy="' + y(pts[pts.length - 1]).toFixed(1) + '"/></svg>';
+  }
+
+  function renderTabs() {
+    $("tabs").innerHTML = DATA.tabs.map(function (t) {
+      return '<button type="button" role="tab" id="tab-' + t.id + '" data-tab="' + t.id + '" aria-selected="' + (t.id === state.tab) + '">' +
+        esc(t.name) + "<small>" + t.items.length + " capsules</small></button>";
+    }).join("");
+  }
+
+  function renderControls() {
+    $("budget").value = budgetOf(tab());
+    [["tilt", state.tilt], ["mode", state.mode]].forEach(function (p) {
+      $(p[0]).querySelectorAll("button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.v === p[1])); });
+    });
+    $("st").value = state.st; $("ss").value = state.ss;
+    $("st-v").textContent = state.st == 0 ? "off" : "×" + Number(state.st).toFixed(1);
+    $("ss-v").textContent = state.ss == 0 ? "off" : "×" + Number(state.ss).toFixed(1);
+    $("mode-note").textContent = NOTES[state.mode];
+  }
+
+  // Rows are built once per tab so price inputs keep focus while the outputs refresh.
+  function renderRows() {
+    $("rows").innerHTML = capsOf(tab()).map(function (c, i) {
+      var o = state.prices[c.name];
+      var days = c.scar ? Math.round(c.scar.days) + " d" : "n/a";
+      var daysTitle = c.scar
+        ? c.scar.listed.toLocaleString("en-US") + " stickers + " + Math.round(c.scar.sealed).toLocaleString("en-US") + " sealed capsules on sale, " +
+          Math.round(c.scar.burn30 / 30).toLocaleString("en-US") + " stickers applied per day"
+        : "No public application data for Rio 2022";
+      return '<tr data-name="' + esc(c.name) + '">' +
+        '<td class="cap">' + esc(c.major) + "<span>" + esc(c.tier) + "</span>" +
+          (c.scar ? "" : '<span class="tag">no scarcity data</span>') + '<span class="tag" data-o hidden>your price</span></td>' +
+        "<td>" + spark(c) + "</td>" +
+        '<td class="n"><div class="money"><input type="text" inputmode="decimal" id="p-' + i + '-' + state.tab + '" aria-label="Price of ' + esc(short(c.name)) +
+          '" data-name="' + esc(c.name) + '" value="' + esc(o != null ? o : c.ask.toFixed(2)) + '"></div></td>' +
+        '<td class="n">' + pct(c.last, c.p30) + "</td>" +
+        '<td class="n">' + pct(c.last, c.p90) + "</td>" +
+        '<td class="n" title="' + esc(daysTitle) + '">' + days + "</td>" +
+        '<td class="n" data-f="t"></td><td class="n" data-f="s"></td>' +
+        '<td><div class="pct-cell"><span class="pct-val" data-f="share"></span><div class="bar"><span data-f="bar"></span></div></div></td>' +
+        '<td class="n buy" data-f="units"></td><td class="n" data-f="cost"></td><td class="n" data-f="be"></td></tr>';
+    }).join("");
+  }
+
+  // Steam: buyer pays seller amount + 5% Steam fee + 10% CS2 fee, each at least 1 cent.
+  function breakEven(p) {
+    var r = Math.ceil(p * 100 - 1e-9);
+    return (r + Math.max(1, Math.floor(r * 0.05)) + Math.max(1, Math.floor(r * 0.10))) / 100;
+  }
+
+  function compute() {
+    var budget = num(budgetOf(tab()));
+    var rows = capsOf(tab()).map(function (c) {
+      var p = priceOf(c);
+      var tilt = state.tilt === "equal" ? 1 : state.tilt === "strong" ? 1 / p : 1 / Math.sqrt(p);
+      var ft = factor(+state.st, c.score[state.mode]), fs = factor(+state.ss, c.score.scar);
+      return { c: c, p: p, ft: ft, fs: fs, w: tilt * ft * fs };
+    });
+    var total = rows.reduce(function (a, r) { return a + r.w; }, 0);
+    if (!(budget > 0)) return { rows: rows, budget: NaN, spent: 0 };
+    var U = 10000, budgetU = Math.round(budget * U);
+    rows.forEach(function (r) {
+      r.share = r.w / total; r.target = budget * r.share;
+      r.pU = Math.round(r.p * U); r.units = Math.floor((r.target * U) / r.pU);
+    });
+    function spent() { return rows.reduce(function (a, r) { return a + r.units * r.pU; }, 0); }
+    for (var guard = 0; guard < 100000; guard++) {
+      var left = budgetU - spent(), best = null;
+      rows.forEach(function (r) {
+        if (r.pU > left) return;
+        var d = r.target * U - r.units * r.pU;
+        if (!best || d > best.d) best = { r: r, d: d };
+      });
+      if (!best) break;
+      best.r.units++;
+    }
+    return { rows: rows, budget: budget, spent: spent() / U };
+  }
+
+  function fx(v) {
+    var cls = v > 1.005 ? "hi" : v < 0.995 ? "lo" : "eq";
+    return '<span class="fx ' + cls + '">×' + v.toFixed(2) + "</span>";
+  }
+
+  function renderResults() {
+    var res = compute();
+    var maxShare = Math.max.apply(null, res.rows.map(function (r) { return r.share || 0; }));
+    var trs = $("rows").querySelectorAll("tr");
+    res.rows.forEach(function (r, i) {
+      var tr = trs[i], q = function (k) { return tr.querySelector('[data-f="' + k + '"]'); };
+      tr.querySelector("[data-o]").hidden = state.prices[r.c.name] == null;
+      q("t").innerHTML = fx(r.ft);
+      q("s").innerHTML = r.c.scar ? fx(r.fs) : '<span class="fx eq">×1.00</span>';
+      if (isFinite(res.budget)) {
+        q("share").textContent = (r.share * 100).toFixed(1) + "%";
+        q("bar").style.width = (r.share / maxShare * 100).toFixed(1) + "%";
+        q("units").textContent = r.units;
+        q("cost").textContent = eur(r.units * r.pU / 10000);
+      } else {
+        ["share", "units", "cost"].forEach(function (k) { q(k).textContent = "–"; });
+        q("bar").style.width = "0";
+      }
+      q("be").textContent = price(breakEven(r.p));
+    });
+    if (!isFinite(res.budget)) {
+      $("summary").innerHTML = '<p class="note">Enter a budget above zero to see the split.</p>';
+      return;
+    }
+    var units = res.rows.reduce(function (a, r) { return a + r.units; }, 0);
+    var top = res.rows.slice().sort(function (a, b) { return b.share - a.share; })[0];
+    var stats = [["Spent", eur(res.spent)], ["Left over", eur(Math.max(0, res.budget - res.spent))],
+      ["Capsules", String(units)], ["Biggest share", short(top.c.name)]];
+    $("summary").innerHTML = stats.map(function (s) {
+      return '<div class="stat"><span class="k">' + s[0] + '</span><span class="v">' + esc(s[1]) + "</span></div>";
+    }).join("");
+  }
+
+  function renderAll() { renderTabs(); renderControls(); renderRows(); renderResults(); }
+
+  var fDate = function (t) { return new Date(t * 1000).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }); };
+  var sd = DATA.scarcity_at || {};
+  $("meta").textContent = "Steam prices in EUR from the Market Station, " + fDate(DATA.prices_at) +
+    " · sticker applications " + (sd.tracker ? fDate(Date.parse(sd.tracker) / 1000) : "n/a") +
+    " · listings " + (sd.feeds ? fDate(Date.parse(sd.feeds) / 1000) : "n/a");
+  $("med-days").textContent = Math.round(DATA.med_days);
+
+  $("tabs").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-tab]"); if (!b) return;
+    state.tab = b.dataset.tab; save(); renderAll();
+  });
+  $("budget").addEventListener("input", function () { state.budgets[state.tab] = this.value; save(); renderResults(); });
+  ["tilt", "mode"].forEach(function (id) {
+    $(id).addEventListener("click", function (e) {
+      var b = e.target.closest("[data-v]"); if (!b) return;
+      state[id] = b.dataset.v; save(); renderControls(); renderResults();
+    });
+  });
+  ["st", "ss"].forEach(function (id) {
+    $(id).addEventListener("input", function () { state[id] = +this.value; save(); renderControls(); renderResults(); });
+  });
+  $("rows").addEventListener("input", function (e) {
+    var t = e.target; if (!t.dataset.name) return;
+    var c = BY[t.dataset.name];
+    if (num(t.value) === c.ask || t.value.trim() === "") delete state.prices[c.name]; else state.prices[c.name] = t.value;
+    save(); renderResults();
+  });
+  $("reset").addEventListener("click", function () { state.prices = {}; save(); renderRows(); renderResults(); });
+
+  renderAll();
+})();
+</script>
+
+</body></html>

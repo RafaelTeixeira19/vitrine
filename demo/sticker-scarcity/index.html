@@ -1,0 +1,368 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<div style="font:500 13px/1.4 system-ui,-apple-system,Segoe UI,sans-serif;background:#16181d;color:#eceef2;padding:8px 16px;display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center"><a href="../../projets/sticker-scarcity.html" style="color:#ff8a72;text-decoration:none;font-weight:700">&larr; Back to portfolio</a><span style="opacity:.8">Frozen demo, copied on 10 Nov 2026: real data, no longer updated.</span></div>
+<title>Major Sticker Scarcity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one column trading sheet. Header, supply toggle, then per tab: chart(s) + table. Dark Steam market world on purpose (single theme). */
+:root {
+  color-scheme: dark;
+  --bg: #141a21;
+  --panel: #1b2129;
+  --raise: #23262e;
+  --line: #2e353f;
+  --grid: #262c35;
+  --ink: #e3e3e3;
+  --ink-2: #afb4ba;
+  --muted: #7d8590;
+  --accent: #1a9fff;
+  --good: #82b461;
+  --bad: #e0614f;
+  --mid: #8f98a0;
+  --f-display: "Rajdhani", "Arial Narrow", Arial, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --f-data: "IBM Plex Mono", Consolas, monospace;
+}
+html, body { background: var(--bg); color: var(--ink); }
+body { font: 14px/1.5 var(--f-body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 48px; display: grid; gap: 22px; }
+h1 { font: 700 34px/1.05 var(--f-display); letter-spacing: .02em; margin: 0; text-wrap: balance; text-transform: uppercase; }
+h2 { font: 700 20px/1.2 var(--f-display); letter-spacing: .04em; text-transform: uppercase; margin: 0; }
+.lede { color: var(--ink-2); max-width: 70ch; margin: 6px 0 0; }
+.meta { color: var(--muted); font: 12px/1.4 var(--f-data); margin-top: 8px; }
+.interim { margin: 10px 0 0; padding: 8px 12px; border-left: 3px solid var(--accent); background: var(--panel); color: var(--ink-2); max-width: 80ch; font-size: 13px; }
+.bar { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; justify-content: space-between; border-block: 1px solid var(--line); padding-block: 10px; }
+.tabs, .seg { display: flex; gap: 2px; background: var(--raise); padding: 3px; border-radius: 4px; }
+.tabs button, .seg button { font: 600 13px/1 var(--f-body); color: var(--ink-2); background: transparent; border: 0; padding: 9px 14px; border-radius: 3px; cursor: pointer; }
+.tabs button[aria-selected="true"], .seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.tabs button:focus-visible, .seg button:focus-visible, th button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ctl { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+.card { background: var(--panel); border-radius: 4px; padding: 18px; display: grid; gap: 10px; min-width: 0; align-content: start; }
+.card p { margin: 0; color: var(--ink-2); max-width: 75ch; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px; }
+.multiples { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 16px; }
+@media (max-width: 860px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 420px) { .multiples { grid-template-columns: minmax(0, 1fr); } h1 { font-size: 28px; } }
+svg { display: block; width: 100%; height: auto; overflow: visible; }
+svg text { font-family: var(--f-data); }
+.axis { fill: var(--muted); font-size: 11px; }
+.axis-title { fill: var(--ink-2); font-size: 11px; font-family: var(--f-body); }
+.gl { stroke: var(--grid); stroke-width: 1; }
+.med { stroke: var(--line); stroke-width: 1; }
+.qlabel { font-family: var(--f-display); font-weight: 700; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+.plabel { fill: var(--ink); font-size: 11px; font-weight: 500; pointer-events: none; }
+.dot { stroke: var(--panel); stroke-width: 2; cursor: pointer; }
+.dot:hover, .dot:focus { stroke: var(--ink); outline: none; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--ink-2); }
+.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+.tip { position: fixed; z-index: 10; pointer-events: none; background: var(--raise); border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; font: 12px/1.45 var(--f-data); color: var(--ink); box-shadow: 0 6px 18px rgba(0,0,0,.4); max-width: 280px; }
+.tip b { font-family: var(--f-body); font-weight: 600; display: block; margin-bottom: 2px; }
+.tip span { color: var(--muted); }
+.tablebox { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { padding: 7px 10px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--grid); }
+th:first-child, td:first-child, th.l, td.l { text-align: left; }
+th { color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+th button { all: unset; cursor: pointer; }
+th button::after { content: ""; }
+th[aria-sort="descending"] button::after { content: " \2193"; }
+th[aria-sort="ascending"] button::after { content: " \2191"; }
+td { font-family: var(--f-data); font-variant-numeric: tabular-nums; }
+td.na { color: var(--muted); }
+.pill { display: inline-block; font: 600 11px/1 var(--f-body); padding: 4px 7px; border-radius: 3px; background: var(--raise); color: var(--ink-2); }
+.pill.good { color: var(--good); } .pill.bad { color: var(--bad); }
+.notes { color: var(--muted); font-size: 12.5px; display: grid; gap: 6px; max-width: 80ch; }
+.notes b { color: var(--ink-2); font-weight: 600; }
+.notes a { color: var(--accent); }
+.mkt { border: 1px solid var(--line); border-radius: 4px; background: var(--panel); }
+.mkt summary { cursor: pointer; padding: 10px 14px; font-weight: 600; color: var(--ink); list-style: none; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.mkt summary::-webkit-details-marker { display: none; }
+.mkt summary::before { content: "\25B8"; color: var(--muted); }
+.mkt[open] summary::before { content: "\25BE"; }
+.mkt summary span { color: var(--muted); font-weight: 400; font-size: 12.5px; }
+.mkt-body { padding: 0 14px 14px; display: grid; gap: 10px; }
+.mkt-presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.mkt-presets button { font: 500 12px/1 var(--f-body); color: var(--ink-2); background: var(--raise); border: 1px solid var(--line); border-radius: 3px; padding: 7px 10px; cursor: pointer; }
+.mkt-presets button:hover { color: var(--ink); border-color: var(--muted); }
+.mkt-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 4px 14px; }
+.mkt-list label { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--ink-2); cursor: pointer; min-width: 0; }
+.mkt-list label b { font-weight: 500; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mkt-list label small { margin-left: auto; font: 11px var(--f-data); color: var(--muted); }
+.mkt-list input { accent-color: var(--accent); }
+.mkt-presets button:focus-visible, .mkt summary:focus-visible, .mkt-list input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: no-preference) { .dot { transition: r .12s; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Major Sticker Scarcity</h1>
+    <p class="lede">Team stickers from every Major since Stockholm 2021: how many have been applied to guns (consumed for good) against how many are for sale today, as stickers or still sealed in capsules. High and to the left is scarce and wanted; low and to the right is a flood nobody uses.</p>
+    <div class="meta" id="meta"></div>
+    <p style="margin:8px 0 0"><a href="stickers.html" style="color:var(--accent);font-size:13px">Per-sticker view: Team Sticker Scarcity</a></p>
+    <p class="interim" id="interim" hidden></p>
+  </header>
+
+  <div class="bar">
+    <div class="tabs" role="tablist" aria-label="View">
+      <button role="tab" id="tab-major" aria-selected="true" aria-controls="view-major">Per Major</button>
+      <button role="tab" id="tab-variant" aria-selected="false" aria-controls="view-variant">Major × variant</button>
+    </div>
+    <div class="ctl">Sealed capsules
+      <div class="seg" role="group" aria-label="Count sealed capsules in the supply">
+        <button id="caps-on" aria-pressed="true" data-caps="1">Counted</button>
+        <button id="caps-off" aria-pressed="false" data-caps="0">Left out</button>
+      </div>
+    </div>
+  </div>
+
+  <details class="mkt" id="mkt">
+    <summary>Markets in the supply <span id="mkt-sum"></span></summary>
+    <div class="mkt-body">
+      <div class="mkt-presets">
+        <button type="button" data-preset="all">All</button>
+        <button type="button" data-preset="steam">Steam only</button>
+        <button type="button" data-preset="none">None</button>
+      </div>
+      <div class="mkt-list" id="mkt-list"></div>
+    </div>
+  </details>
+
+  <section id="view-major" role="tabpanel" aria-labelledby="tab-major" style="display:grid;gap:16px">
+    <div class="grid2">
+      <div class="card">
+        <h2>Applied vs supply</h2>
+        <p>Each dot is one Major (all its team stickers summed). Lines are the medians of the Majors shown.</p>
+        <div id="scatter-major"></div>
+        <div class="legend" id="legend-major"></div>
+      </div>
+      <div class="card">
+        <h2>Days of listings</h2>
+        <p>Supply on sale today divided by the stickers applied per day over the last 30 days. It measures how thin the market floor is, not the stock left: most stickers sit unlisted in inventories and keep refilling the market.</p>
+        <div id="bars-major"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Per Major</h2>
+      <div class="tablebox"><table id="table-major"></table></div>
+    </div>
+  </section>
+
+  <section id="view-variant" role="tabpanel" aria-labelledby="tab-variant" hidden style="display:grid;gap:16px">
+    <p class="lede" style="margin:0">One panel per finish, because a Paper sticker and a Gold one live on different scales. Each dot is one Major's set of that finish; medians are per panel.</p>
+    <div class="multiples" id="multiples"></div>
+    <div class="card">
+      <h2>Major × variant</h2>
+      <div class="tablebox"><table id="table-variant"></table></div>
+    </div>
+  </section>
+
+  <footer class="notes" id="notes">
+    <div><b>Applied</b>: stickers currently applied to guns, from <a href="https://www.cs2stickertracker.com/" target="_blank" rel="noopener">cs2stickertracker.com</a>. Its 1x to 5x figures count guns with at least 1, 2... 5 copies, so their sum is the number of stickers applied (the site's own "weighted sticker slots") and 1x is the number of guns. The site says it is in early development, and rounds large counts to the thousand. A sticker scraped off a gun leaves the count, so this is a floor of what was consumed, and a 30-day figure can dip below zero.</div>
+    <div><b>Stockholm 2021 and Rio 2022</b>: no public source counts their applications. The tracker does not cover them, CSFloat's FloatDB needs an account, and Steam's description search only finds guns on sale, with a ratio to the tracker that swings by a factor of five. They appear in the tables with their supply, not on the charts.</div>
+    <div><b>Supply</b>: listings open today, by market. Steam comes from the Steam market itself; BUFF, YouPin, C5GAME and HaloSkins from <a href="https://steamdt.com/" target="_blank" rel="noopener">SteamDT</a>; CSFloat, Skinport, Waxpeer and Market.CSGO from their own public price feeds. CSFloat, Skinport and Waxpeer match the counts csgoskins.gg shows; Market.CSGO could not be cross-checked and its counts move a lot within a day. These nine markets cover every sticker and capsule alike, which keeps Majors comparable. The same item can be listed on several markets at once, so ticking them all gives an upper bound. Left out: CS.MONEY (its market API refuses automated browsers; about 1% of sticker offers on the 150 items where csgoskins.gg showed every market) and the other markets only csgoskins.gg lists, such as csboard and NTSkins (it blocks automated reading after about 150 pages). Nobody publishes how many stickers sit in inventories.</div>
+    <div><b>Sealed capsules</b>: listed team capsules count as stickers not yet opened. Each team sticker gets the listed capsules that contain it, times the unboxing odds of its rarity (80.13% High Grade, 16.03% Remarkable, 3.21% Exotic, 0.64% Extraordinary), divided by the number of stickers of that rarity in the capsule. Organiser stickers (BLAST.tv, PGL...) share the odds but are not counted, so a capsule is worth a little less than one team sticker. Which finish holds which rarity changes between Majors.</div>
+    <div><b>30-day pace</b>: change in stickers applied between the two tracker snapshots closest to 30 days apart, scaled to 30 days.</div>
+    <div><b>Cologne 2026</b> broke the old supply model: no capsules and no $0.25 clearance. Stickers were bought one by one in the in-game Major Hub at demand-based prices until 29 September 2026. Its second "Ranked Series" (fixed prices, from 29 July) is not tracked for applications and is left out.</div>
+    <div id="dates"></div>
+  </footer>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+const DATA = {"generated":"2026-10-19T12:13+00:00","dates":{"steam":"2026-10-19T10:40:04+00:00","steamdt":"2026-10-19T12:13:11+00:00","csgoskins":null,"feeds":"2026-10-19T09:50:03+00:00","tracker":"2026-10-19T08:30:13.935000+00:00"},"majors":["Stockholm 2021","Antwerp 2022","Rio 2022","Paris 2023","Copenhagen 2024","Shanghai 2024","Austin 2025","Budapest 2025","Cologne 2026"],"variants":["Paper","Glitter","Holo","Foil","Gold","Embroidered"],"odds":{"High Grade":0.8013,"Remarkable":0.1603,"Exotic":0.0321,"Extraordinary":0.0064},"markets":[{"name":"Steam","listings":3450470},{"name":"YouPin","listings":777737},{"name":"Skinport","listings":292407},{"name":"BUFF","listings":265360},{"name":"CSFloat","listings":214045},{"name":"C5GAME","listings":191425},{"name":"HaloSkins","listings":181930},{"name":"Market.CSGO","listings":51131},{"name":"Waxpeer","listings":16418}],"n_stickers":960,"capsules":[{"major":"Antwerp 2022","name":"Antwerp 2022 Challengers Sticker Capsule","total":34502.0,"cg":false,"dt":true},{"major":"Antwerp 2022","name":"Antwerp 2022 Contenders Sticker Capsule","total":46436.0,"cg":false,"dt":true},{"major":"Antwerp 2022","name":"Antwerp 2022 Legends Sticker Capsule","total":33773.0,"cg":false,"dt":true},{"major":"Austin 2025","name":"Austin 2025 Challengers Sticker Capsule","total":42737.0,"cg":false,"dt":true},{"major":"Austin 2025","name":"Austin 2025 Contenders Sticker Capsule","total":53327.0,"cg":false,"dt":true},{"major":"Austin 2025","name":"Austin 2025 Legends Sticker Capsule","total":80336.0,"cg":false,"dt":true},{"major":"Budapest 2025","name":"Budapest 2025 Challengers Sticker Capsule","total":74649.0,"cg":false,"dt":true},{"major":"Budapest 2025","name":"Budapest 2025 Contenders Sticker Capsule","total":166863.0,"cg":false,"dt":true},{"major":"Budapest 2025","name":"Budapest 2025 Legends Sticker Capsule","total":74955.0,"cg":false,"dt":true},{"major":"Copenhagen 2024","name":"Copenhagen 2024 Challengers Sticker Capsule","total":11086.0,"cg":false,"dt":true},{"major":"Copenhagen 2024","name":"Copenhagen 2024 Contenders Sticker Capsule","total":24189.0,"cg":false,"dt":true},{"major":"Copenhagen 2024","name":"Copenhagen 2024 Legends Sticker Capsule","total":13269.0,"cg":false,"dt":true},{"major":"Paris 2023","name":"Paris 2023 Challengers Sticker Capsule","total":169474.0,"cg":false,"dt":true},{"major":"Paris 2023","name":"Paris 2023 Contenders Sticker Capsule","total":435212.0,"cg":false,"dt":true},{"major":"Paris 2023","name":"Paris 2023 Legends Sticker Capsule","total":309717.0,"cg":false,"dt":true},{"major":"Rio 2022","name":"Rio 2022 Challengers Sticker Capsule","total":27106.0,"cg":false,"dt":true},{"major":"Rio 2022","name":"Rio 2022 Contenders Sticker Capsule","total":24666.0,"cg":false,"dt":true},{"major":"Rio 2022","name":"Rio 2022 Legends Sticker Capsule","total":15070.0,"cg":false,"dt":true},{"major":"Shanghai 2024","name":"Shanghai 2024 Challengers Sticker Capsule","total":7848.0,"cg":false,"dt":true},{"major":"Shanghai 2024","name":"Shanghai 2024 Contenders Sticker Capsule","total":19218.0,"cg":false,"dt":true},{"major":"Shanghai 2024","name":"Shanghai 2024 Legends Sticker Capsule","total":12522.0,"cg":false,"dt":true},{"major":"Stockholm 2021","name":"Stockholm 2021 Challengers Sticker Capsule","total":10318.0,"cg":false,"dt":true},{"major":"Stockholm 2021","name":"Stockholm 2021 Contenders Sticker Capsule","total":15955.0,"cg":false,"dt":true},{"major":"Stockholm 2021","name":"Stockholm 2021 Legends Sticker Capsule","total":19639.0,"cg":false,"dt":true}],"by_major":[{"key":"Stockholm 2021","n":96,"mk":{"Steam":39032,"BUFF":23089,"YouPin":49888,"C5GAME":15231,"HaloSkins":13638,"Skinport":12525,"Waxpeer":1972,"Market.CSGO":1819,"CSFloat":8654},"caps":{"Steam":3411.0,"BUFF":2456.2,"YouPin":6471.8,"C5GAME":3521.2,"HaloSkins":3462.6,"Skinport":15718.9,"Waxpeer":188.5,"Market.CSGO":259.6,"CSFloat":5325.0},"copies":null,"guns":null,"burn30":null,"n_apps":0,"n_cg":0,"n_dt":96},{"key":"Antwerp 2022","n":96,"mk":{"Steam":62549,"BUFF":28401,"YouPin":50239,"C5GAME":15925,"HaloSkins":14473,"Skinport":16282,"Waxpeer":1847,"Market.CSGO":3477,"CSFloat":10160},"caps":{"Steam":19804.6,"BUFF":6454.9,"YouPin":24172.2,"C5GAME":16300.3,"HaloSkins":16194.5,"Skinport":4487.6,"Waxpeer":225.8,"Market.CSGO":8316.4,"CSFloat":6019.3},"copies":15074808.0,"guns":8926967.0,"burn30":75224.09668542408,"n_apps":96,"n_cg":0,"n_dt":96},{"key":"Rio 2022","n":96,"mk":{"Steam":86332,"BUFF":30263,"YouPin":52378,"C5GAME":17488,"HaloSkins":16287,"Skinport":6557,"Waxpeer":1937,"Market.CSGO":2560,"CSFloat":7756},"caps":{"Steam":18698.8,"BUFF":4367.5,"YouPin":22272.4,"C5GAME":5669.0,"HaloSkins":5330.3,"Skinport":219.6,"Waxpeer":49.8,"Market.CSGO":378.7,"CSFloat":2434.9},"copies":null,"guns":null,"burn30":null,"n_apps":0,"n_cg":0,"n_dt":96},{"key":"Paris 2023","n":96,"mk":{"Steam":2128684,"BUFF":76533,"YouPin":245703,"C5GAME":51931,"HaloSkins":50628,"Skinport":183960,"Waxpeer":2374,"Market.CSGO":26141,"CSFloat":87697},"caps":{"Steam":405590.8,"BUFF":20268.7,"YouPin":107941.5,"C5GAME":114339.4,"HaloSkins":112976.6,"Skinport":37131.7,"Waxpeer":1518.4,"Market.CSGO":5115.2,"CSFloat":8001.7},"copies":38942488.0,"guns":22459552.0,"burn30":655723.8743377386,"n_apps":96,"n_cg":0,"n_dt":96},{"key":"Copenhagen 2024","n":96,"mk":{"Steam":81603,"BUFF":18920,"YouPin":38358,"C5GAME":16454,"HaloSkins":15309,"Skinport":27952,"Waxpeer":2171,"Market.CSGO":2274,"CSFloat":14515},"caps":{"Steam":13949.8,"BUFF":3101.6,"YouPin":13229.8,"C5GAME":4209.3,"HaloSkins":4007.5,"Skinport":1174.3,"Waxpeer":289.8,"Market.CSGO":440.0,"CSFloat":2752.3},"copies":9596910.0,"guns":5321985.0,"burn30":292706.7567155441,"n_apps":96,"n_cg":0,"n_dt":96},{"key":"Shanghai 2024","n":96,"mk":{"Steam":54162,"BUFF":13632,"YouPin":38720,"C5GAME":14050,"HaloSkins":13550,"Skinport":23446,"Waxpeer":1315,"Market.CSGO":1999,"CSFloat":7116},"caps":{"Steam":5784.6,"BUFF":2331.8,"YouPin":13136.4,"C5GAME":4868.0,"HaloSkins":4593.3,"Skinport":1634.8,"Waxpeer":91.6,"Market.CSGO":237.4,"CSFloat":2514.9},"copies":4103342.0,"guns":2818536.0,"burn30":103541.45916821202,"n_apps":96,"n_cg":0,"n_dt":96},{"key":"Austin 2025","n":128,"mk":{"Steam":221564,"BUFF":37820,"YouPin":102217,"C5GAME":32949,"HaloSkins":31878,"Skinport":18801,"Waxpeer":1721,"Market.CSGO":3961,"CSFloat":30739},"caps":{"Steam":33796.1,"BUFF":7318.0,"YouPin":47896.3,"C5GAME":33775.0,"HaloSkins":31531.2,"Skinport":733.0,"Waxpeer":511.0,"Market.CSGO":270.5,"CSFloat":3773.1},"copies":3260934.0,"guns":2399825.0,"burn30":159420.94819851135,"n_apps":128,"n_cg":0,"n_dt":128},{"key":"Budapest 2025","n":128,"mk":{"Steam":769318,"BUFF":33751,"YouPin":196256,"C5GAME":25108,"HaloSkins":23998,"Skinport":2726,"Waxpeer":2466,"Market.CSGO":8299,"CSFloat":44629},"caps":{"Steam":86893.0,"BUFF":19625.5,"YouPin":66840.4,"C5GAME":44608.5,"HaloSkins":42788.7,"Skinport":16024.3,"Waxpeer":998.7,"Market.CSGO":1569.1,"CSFloat":10709.6},"copies":2977270.0,"guns":2034011.0,"burn30":217696.2773449222,"n_apps":128,"n_cg":0,"n_dt":128},{"key":"Cologne 2026","n":128,"mk":{"Steam":7226,"BUFF":2951,"YouPin":3978,"C5GAME":2289,"HaloSkins":2169,"Skinport":158,"Waxpeer":615,"Market.CSGO":601,"CSFloat":2779},"caps":{},"copies":167008.0,"guns":106394.0,"burn30":10936.587364151053,"n_apps":128,"n_cg":0,"n_dt":128}],"by_major_variant":[{"key":["Stockholm 2021","Paper"],"n":24,"mk":{"Steam":33450,"BUFF":11285,"YouPin":15619,"C5GAME":6330,"HaloSkins":5495,"Skinport":3272,"Waxpeer":221,"Market.CSGO":733,"CSFloat":2204},"caps":{"Steam":2733.0,"BUFF":1968.0,"YouPin":5185.3,"C5GAME":2821.3,"HaloSkins":2774.3,"Skinport":12594.3,"Waxpeer":151.0,"Market.CSGO":208.0,"CSFloat":4266.5},"copies":null,"guns":null,"burn30":null,"n_apps":0,"n_cg":0,"n_dt":24},{"key":["Stockholm 2021","Holo"],"n":24,"mk":{"Steam":3239,"BUFF":6948,"YouPin":27505,"C5GAME":6599,"HaloSkins":6116,"Skinport":7114,"Waxpeer":1212,"Market.CSGO":630,"CSFloat":4981},"caps":{"Steam":546.7,"BUFF":393.7,"YouPin":1037.3,"C5GAME":564.4,"HaloSkins":555.0,"Skinport":2519.5,"Waxpeer":30.2,"Market.CSGO":41.6,"CSFloat":853.5},"copies":null,"guns":null,"burn30":null,"n_apps":0,"n_cg":0,"n_dt":24},{"key":["Stockholm 2021","Foil"],"n":24,"mk":{"Steam":1752,"BUFF":3297,"YouPin":4834,"C5GAME":1481,"HaloSkins":1336,"Skinport":1673,"Waxpeer":345,"Market.CSGO":248,"CSFloat":1075},"caps":{"Steam":109.5,"BUFF":78.8,"YouPin":207.7,"C5GAME":113.0,"HaloSkins":111.1,"Skinport":504.5,"Waxpeer":6.0,"Market.CSGO":8.3,"CSFloat":170.9},"copies":null,"guns":null,"burn30":null,"n_apps":0,"n_cg":0,"n_dt":24},{"key":["Stockholm 2021","Gold"],"n":24,"mk":{"Steam":591,"BUFF":1559,"YouPin":1930,"C5GAME":821,"HaloSkins":691,"Skinport":466,"Waxpeer":194,"Market.CSGO":208,"CSFloat":394},"caps":{"Steam":21.8,"BUFF":15.7,"YouPin":41.4,"C5GAME":22.5,"HaloSkins":22.2,"Skinport":100.6,"Waxpeer":1.2,"Market.CSGO":1.7,"CSFloat":34.1},"copies":null,"guns":null,"burn30":null,"n_apps":0,"n_cg":0,"n_dt":24},{"key":["Antwerp 2022","Paper"],"n":24,"mk":{"Steam":51788,"BUFF":11560,"YouPin":12781,"C5GAME":6398,"HaloSkins":5512,"Skinport":9651,"Waxpeer":470,"Market.CSGO":2346,"CSFloat":4870},"caps":{"Steam":15867.9,"BUFF":5171.8,"YouPin":19367.2,"C5GAME":13060.1,"HaloSkins":12975.4,"Skinport":3595.5,"Waxpeer":180.9,"Market.CSGO":6663.3,"CSFloat":4822.8},"copies":10979096.0,"guns":6673000.0,"burn30":60934.96274059072,"n_apps":24,"n_cg":0,"n_dt":24},{"key":["Antwerp 2022","Glitter"],"n":24,"mk":{"Steam":7557,"BUFF":9987,"YouPin":17149,"C5GAME":4268,"HaloSkins":4105,"Skinport":2694,"Waxpeer":313,"Market.CSGO":455,"CSFloat":2042},"caps":{"Steam":3174.4,"BUFF":1034.6,"YouPin":3874.4,"C5GAME":2612.7,"HaloSkins":2595.7,"Skinport":719.3,"Waxpeer":36.2,"Market.CSGO":1333.0,"CSFloat":964.8},"copies":3259026.0,"guns":1800652.0,"burn30":10690.401628852162,"n_apps":24,"n_cg":0,"n_dt":24},{"key":["Antwerp 2022","Holo"],"n":24,"mk":{"Steam":2340,"BUFF":4090,"YouPin":15067,"C5GAME":3601,"HaloSkins":3300,"Skinport":3251,"Waxpeer":851,"Market.CSGO":396,"CSFloat":2650},"caps":{"Steam":635.7,"BUFF":207.2,"YouPin":775.8,"C5GAME":523.2,"HaloSkins":519.8,"Skinport":144.0,"Waxpeer":7.2,"Market.CSGO":266.9,"CSFloat":193.2},"copies":727194.0,"guns":384223.0,"burn30":2981.6405423797364,"n_apps":24,"n_cg":0,"n_dt":24},{"key":["Antwerp 2022","Gold"],"n":24,"mk":{"Steam":864,"BUFF":2764,"YouPin":5242,"C5GAME":1658,"HaloSkins":1556,"Skinport":686,"Waxpeer":213,"Market.CSGO":280,"CSFloat":598},"caps":{"Steam":126.7,"BUFF":41.3,"YouPin":154.7,"C5GAME":104.3,"HaloSkins":103.6,"Skinport":28.7,"Waxpeer":1.4,"Market.CSGO":53.2,"CSFloat":38.5},"copies":109492.0,"guns":69092.0,"burn30":617.0917736015068,"n_apps":24,"n_cg":0,"n_dt":24},{"key":["Rio 2022","Paper"],"n":24,"mk":{"Steam":71768,"BUFF":12917,"YouPin":17117,"C5GAME":8248,"HaloSkins":7681,"Skinport":4298,"Waxpeer":665,"Market.CSGO":1160,"CSFloat":4671},"caps":{"Steam":14981.8,"BUFF":3499.4,"YouPin":17845.1,"C5GAME":4542.1,"HaloSkins":4270.8,"Skinport":175.9,"Waxpeer":39.9,"Market.CSGO":303.4,"CSFloat":1950.9},"copies":null,"guns":null,"burn30":null,"n_apps":0,"n_cg":0,"n_dt":24},{"key":["Rio 2022","Glitter"],"n":24,"mk":{"Steam":10526,"BUFF":9902,"YouPin":16469,"C5GAME":4288,"HaloSkins":4024,"Skinport":943,"Waxpeer":95,"Market.CSGO":399,"CSFloat":1447},"caps":{"Steam":2997.1,"BUFF":700.0,"YouPin":3569.9,"C5GAME":908.7,"HaloSkins":854.4,"Skinport":35.2,"Waxpeer":8.0,"Market.CSGO":60.7,"CSFloat":390.3},"copies":null,"guns":null,"burn30":null,"n_apps":0,"n_cg":0,"n_dt":24},{"key":["Rio 2022","Holo"],"n":24,"mk":{"Steam":3054,"BUFF":5169,"YouPin":15516,"C5GAME":3832,"HaloSkins":3580,"Skinport":975,"Waxpeer":908,"Market.CSGO":630,"CSFloat":1187},"caps":{"Steam":600.2,"BUFF":140.2,"YouPin":714.9,"C5GAME":182.0,"HaloSkins":171.1,"Skinport":7.0,"Waxpeer":1.6,"Market.CSGO":12.2,"CSFloat":78.2},"copies":null,"guns":null,"burn30":null,"n_apps":0,"n_cg":0,"n_dt":24},{"key":["Rio 2022","Gold"],"n":24,"mk":{"Steam":984,"BUFF":2275,"YouPin":3276,"C5GAME":1120,"HaloSkins":1002,"Skinport":341,"Waxpeer":269,"Market.CSGO":371,"CSFloat":451},"caps":{"Steam":119.7,"BUFF":27.9,"YouPin":142.5,"C5GAME":36.3,"HaloSkins":34.1,"Skinport":1.4,"Waxpeer":0.3,"Market.CSGO":2.4,"CSFloat":15.6},"copies":null,"guns":null,"burn30":null,"n_apps":0,"n_cg":0,"n_dt":24},{"key":["Paris 2023","Paper"],"n":24,"mk":{"Steam":2059013,"BUFF":37303,"YouPin":158770,"C5GAME":23531,"HaloSkins":22845,"Skinport":166424,"Waxpeer":1275,"Market.CSGO":22875,"CSFloat":75358},"caps":{"Steam":324967.4,"BUFF":16239.7,"YouPin":86484.8,"C5GAME":91611.0,"HaloSkins":90519.1,"Skinport":29750.7,"Waxpeer":1216.6,"Market.CSGO":4098.4,"CSFloat":6411.1},"copies":27294178.0,"guns":15843000.0,"burn30":457660.17979349283,"n_apps":24,"n_cg":0,"n_dt":24},{"key":["Paris 2023","Glitter"],"n":24,"mk":{"Steam":55691,"BUFF":14245,"YouPin":30398,"C5GAME":16533,"HaloSkins":16250,"Skinport":7514,"Waxpeer":17,"Market.CSGO":1903,"CSFloat":5338},"caps":{"Steam":65009.7,"BUFF":3248.7,"YouPin":17301.3,"C5GAME":18326.8,"HaloSkins":18108.3,"Skinport":5951.6,"Waxpeer":243.4,"Market.CSGO":819.9,"CSFloat":1282.5},"copies":8884708.0,"guns":5189000.0,"burn30":155925.6536748003,"n_apps":24,"n_cg":0,"n_dt":24},{"key":["Paris 2023","Holo"],"n":24,"mk":{"Steam":11186,"BUFF":18899,"YouPin":46916,"C5GAME":8769,"HaloSkins":8490,"Skinport":7720,"Waxpeer":637,"Market.CSGO":846,"CSFloat":5778},"caps":{"Steam":13018.2,"BUFF":650.6,"YouPin":3464.6,"C5GAME":3669.9,"HaloSkins":3626.2,"Skinport":1191.8,"Waxpeer":48.7,"Market.CSGO":164.2,"CSFloat":256.8},"copies":2273938.0,"guns":1144774.0,"burn30":36290.21394268781,"n_apps":24,"n_cg":0,"n_dt":24},{"key":["Paris 2023","Gold"],"n":24,"mk":{"Steam":2794,"BUFF":6086,"YouPin":9619,"C5GAME":3098,"HaloSkins":3043,"Skinport":2302,"Waxpeer":445,"Market.CSGO":517,"CSFloat":1223},"caps":{"Steam":2595.5,"BUFF":129.7,"YouPin":690.8,"C5GAME":731.7,"HaloSkins":723.0,"Skinport":237.6,"Waxpeer":9.7,"Market.CSGO":32.7,"CSFloat":51.2},"copies":489664.0,"guns":282778.0,"burn30":5847.8269267580745,"n_apps":24,"n_cg":0,"n_dt":24},{"key":["Copenhagen 2024","Paper"],"n":24,"mk":{"Steam":65396,"BUFF":8923,"YouPin":11174,"C5GAME":8349,"HaloSkins":7885,"Skinport":23399,"Waxpeer":545,"Market.CSGO":1062,"CSFloat":8448},"caps":{"Steam":11176.9,"BUFF":2485.1,"YouPin":10600.0,"C5GAME":3372.6,"HaloSkins":3210.9,"Skinport":940.9,"Waxpeer":232.2,"Market.CSGO":352.6,"CSFloat":2205.2},"copies":6759373.0,"guns":3794000.0,"burn30":237840.9243103828,"n_apps":24,"n_cg":0,"n_dt":24},{"key":["Copenhagen 2024","Glitter"],"n":24,"mk":{"Steam":13325,"BUFF":5050,"YouPin":6490,"C5GAME":3002,"HaloSkins":2769,"Skinport":2626,"Waxpeer":364,"Market.CSGO":468,"CSFloat":2991},"caps":{"Steam":2235.9,"BUFF":497.1,"YouPin":2120.5,"C5GAME":674.7,"HaloSkins":642.3,"Skinport":188.2,"Waxpeer":46.5,"Market.CSGO":70.5,"CSFloat":441.1},"copies":2352601.0,"guns":1244954.0,"burn30":48051.67662804432,"n_apps":24,"n_cg":0,"n_dt":24},{"key":["Copenhagen 2024","Holo"],"n":24,"mk":{"Steam":2194,"BUFF":3359,"YouPin":18540,"C5GAME":4147,"HaloSkins":3834,"Skinport":1419,"Waxpeer":1164,"Market.CSGO":609,"CSFloat":2550},"caps":{"Steam":447.7,"BUFF":99.6,"YouPin":424.6,"C5GAME":135.1,"HaloSkins":128.6,"Skinport":37.7,"Waxpeer":9.3,"Market.CSGO":14.1,"CSFloat":88.3},"copies":379145.0,"guns":219388.0,"burn30":4885.174736597705,"n_apps":24,"n_cg":0,"n_dt":24},{"key":["Copenhagen 2024","Gold"],"n":24,"mk":{"Steam":688,"BUFF":1588,"YouPin":2154,"C5GAME":956,"HaloSkins":821,"Skinport":508,"Waxpeer":98,"Market.CSGO":135,"CSFloat":526},"caps":{"Steam":89.3,"BUFF":19.8,"YouPin":84.7,"C5GAME":26.9,"HaloSkins":25.6,"Skinport":7.5,"Waxpeer":1.9,"Market.CSGO":2.8,"CSFloat":17.6},"copies":105791.0,"guns":63643.0,"burn30":1928.9810405191845,"n_apps":24,"n_cg":0,"n_dt":24},{"key":["Shanghai 2024","Paper"],"n":24,"mk":{"Steam":42646,"BUFF":6698,"YouPin":7534,"C5GAME":3465,"HaloSkins":3457,"Skinport":19877,"Waxpeer":96,"Market.CSGO":894,"CSFloat":4405},"caps":{"Steam":4634.7,"BUFF":1868.3,"YouPin":10525.2,"C5GAME":3900.4,"HaloSkins":3680.3,"Skinport":1309.9,"Waxpeer":73.4,"Market.CSGO":190.2,"CSFloat":2015.0},"copies":2985818.0,"guns":2068050.0,"burn30":78842.32874260603,"n_apps":24,"n_cg":0,"n_dt":24},{"key":["Shanghai 2024","Glitter"],"n":24,"mk":{"Steam":9123,"BUFF":3499,"YouPin":9209,"C5GAME":4727,"HaloSkins":4583,"Skinport":2434,"Waxpeer":276,"Market.CSGO":502,"CSFloat":1140},"caps":{"Steam":927.2,"BUFF":373.7,"YouPin":2105.6,"C5GAME":780.3,"HaloSkins":736.2,"Skinport":262.0,"Waxpeer":14.7,"Market.CSGO":38.0,"CSFloat":403.1},"copies":982109.0,"guns":657797.0,"burn30":24128.03904436313,"n_apps":24,"n_cg":0,"n_dt":24},{"key":["Shanghai 2024","Holo"],"n":24,"mk":{"Steam":1598,"BUFF":2065,"YouPin":18948,"C5GAME":4645,"HaloSkins":4371,"Skinport":809,"Waxpeer":852,"Market.CSGO":435,"CSFloat":1211},"caps":{"Steam":185.7,"BUFF":74.8,"YouPin":421.6,"C5GAME":156.2,"HaloSkins":147.4,"Skinport":52.5,"Waxpeer":2.9,"Market.CSGO":7.6,"CSFloat":80.7},"copies":107875.0,"guns":74398.0,"burn30":1289.4577935463697,"n_apps":24,"n_cg":0,"n_dt":24},{"key":["Shanghai 2024","Gold"],"n":24,"mk":{"Steam":795,"BUFF":1370,"YouPin":3029,"C5GAME":1213,"HaloSkins":1139,"Skinport":326,"Waxpeer":91,"Market.CSGO":168,"CSFloat":360},"caps":{"Steam":37.0,"BUFF":14.9,"YouPin":84.1,"C5GAME":31.2,"HaloSkins":29.4,"Skinport":10.5,"Waxpeer":0.6,"Market.CSGO":1.5,"CSFloat":16.1},"copies":27540.0,"guns":18291.0,"burn30":-718.3664123034737,"n_apps":24,"n_cg":0,"n_dt":24},{"key":["Austin 2025","Paper"],"n":32,"mk":{"Steam":197190,"BUFF":14484,"YouPin":31962,"C5GAME":12058,"HaloSkins":11902,"Skinport":15489,"Waxpeer":251,"Market.CSGO":2049,"CSFloat":22808},"caps":{"Steam":27078.1,"BUFF":5863.3,"YouPin":38375.5,"C5GAME":27061.2,"HaloSkins":25263.4,"Skinport":587.3,"Waxpeer":409.4,"Market.CSGO":216.7,"CSFloat":3023.1},"copies":2483950.0,"guns":1870449.0,"burn30":112219.91356801396,"n_apps":32,"n_cg":0,"n_dt":32},{"key":["Austin 2025","Holo"],"n":32,"mk":{"Steam":3499,"BUFF":7225,"YouPin":41234,"C5GAME":10765,"HaloSkins":10118,"Skinport":1338,"Waxpeer":1143,"Market.CSGO":760,"CSFloat":3072},"caps":{"Steam":1084.7,"BUFF":234.9,"YouPin":1537.3,"C5GAME":1084.1,"HaloSkins":1012.1,"Skinport":23.5,"Waxpeer":16.4,"Market.CSGO":8.7,"CSFloat":121.1},"copies":69586.0,"guns":44365.0,"burn30":3949.985881456239,"n_apps":32,"n_cg":0,"n_dt":32},{"key":["Austin 2025","Foil"],"n":32,"mk":{"Steam":19124,"BUFF":11926,"YouPin":22188,"C5GAME":7815,"HaloSkins":7633,"Skinport":1694,"Waxpeer":178,"Market.CSGO":965,"CSFloat":4211},"caps":{"Steam":5417.0,"BUFF":1173.0,"YouPin":7677.0,"C5GAME":5413.6,"HaloSkins":5053.9,"Skinport":117.5,"Waxpeer":81.9,"Market.CSGO":43.4,"CSFloat":604.8},"copies":685185.0,"guns":468674.0,"burn30":44644.41879498426,"n_apps":32,"n_cg":0,"n_dt":32},{"key":["Austin 2025","Gold"],"n":32,"mk":{"Steam":1751,"BUFF":4185,"YouPin":6833,"C5GAME":2311,"HaloSkins":2225,"Skinport":280,"Waxpeer":149,"Market.CSGO":187,"CSFloat":648},"caps":{"Steam":216.3,"BUFF":46.8,"YouPin":306.5,"C5GAME":216.1,"HaloSkins":201.8,"Skinport":4.7,"Waxpeer":3.3,"Market.CSGO":1.7,"CSFloat":24.1},"copies":22213.0,"guns":16337.0,"burn30":-1393.3700459430306,"n_apps":32,"n_cg":0,"n_dt":32},{"key":["Budapest 2025","Paper"],"n":32,"mk":{"Steam":746917,"BUFF":20204,"YouPin":149102,"C5GAME":11634,"HaloSkins":11380,"Skinport":1613,"Waxpeer":510,"Market.CSGO":6850,"CSFloat":39546},"caps":{"Steam":69620.4,"BUFF":15724.4,"YouPin":53553.9,"C5GAME":35741.2,"HaloSkins":34283.2,"Skinport":12839.0,"Waxpeer":800.2,"Market.CSGO":1257.2,"CSFloat":8580.8},"copies":2454315.0,"guns":1628754.0,"burn30":185636.48641774865,"n_apps":32,"n_cg":0,"n_dt":32},{"key":["Budapest 2025","Holo"],"n":32,"mk":{"Steam":3710,"BUFF":5703,"YouPin":37034,"C5GAME":7612,"HaloSkins":7178,"Skinport":961,"Waxpeer":1311,"Market.CSGO":712,"CSFloat":2113},"caps":{"Steam":2789.0,"BUFF":629.9,"YouPin":2145.4,"C5GAME":1431.8,"HaloSkins":1373.4,"Skinport":514.3,"Waxpeer":32.1,"Market.CSGO":50.4,"CSFloat":343.7},"copies":41092.0,"guns":31308.0,"burn30":2898.4184651745236,"n_apps":32,"n_cg":0,"n_dt":32},{"key":["Budapest 2025","Gold"],"n":32,"mk":{"Steam":1681,"BUFF":2727,"YouPin":3919,"C5GAME":1323,"HaloSkins":1232,"Skinport":93,"Waxpeer":358,"Market.CSGO":339,"CSFloat":770},"caps":{"Steam":556.1,"BUFF":125.6,"YouPin":427.7,"C5GAME":285.5,"HaloSkins":273.8,"Skinport":102.5,"Waxpeer":6.4,"Market.CSGO":10.0,"CSFloat":68.5},"copies":43284.0,"guns":27638.0,"burn30":2335.343832760372,"n_apps":32,"n_cg":0,"n_dt":32},{"key":["Budapest 2025","Embroidered"],"n":32,"mk":{"Steam":17010,"BUFF":5117,"YouPin":6201,"C5GAME":4539,"HaloSkins":4208,"Skinport":59,"Waxpeer":287,"Market.CSGO":398,"CSFloat":2200},"caps":{"Steam":13927.6,"BUFF":3145.7,"YouPin":10713.4,"C5GAME":7150.0,"HaloSkins":6858.4,"Skinport":2568.4,"Waxpeer":160.1,"Market.CSGO":251.5,"CSFloat":1716.6},"copies":438579.0,"guns":346311.0,"burn30":26826.028629238546,"n_apps":32,"n_cg":0,"n_dt":32},{"key":["Cologne 2026","Paper"],"n":32,"mk":{"Steam":5063,"BUFF":1493,"YouPin":2120,"C5GAME":1358,"HaloSkins":1281,"Skinport":8,"Waxpeer":321,"Market.CSGO":367,"CSFloat":871},"caps":{},"copies":114838.0,"guns":74289.0,"burn30":7004.565746145254,"n_apps":32,"n_cg":0,"n_dt":32},{"key":["Cologne 2026","Holo"],"n":32,"mk":{"Steam":871,"BUFF":731,"YouPin":1281,"C5GAME":722,"HaloSkins":689,"Skinport":100,"Waxpeer":215,"Market.CSGO":130,"CSFloat":1328},"caps":{},"copies":15135.0,"guns":8597.0,"burn30":923.505265891308,"n_apps":32,"n_cg":0,"n_dt":32},{"key":["Cologne 2026","Foil"],"n":32,"mk":{"Steam":1196,"BUFF":686,"YouPin":541,"C5GAME":192,"HaloSkins":187,"Skinport":49,"Waxpeer":66,"Market.CSGO":93,"CSFloat":453},"caps":{},"copies":36530.0,"guns":23046.0,"burn30":2966.744977131874,"n_apps":32,"n_cg":0,"n_dt":32},{"key":["Cologne 2026","Gold"],"n":32,"mk":{"Steam":96,"BUFF":41,"YouPin":36,"C5GAME":17,"HaloSkins":12,"Skinport":1,"Waxpeer":13,"Market.CSGO":11,"CSFloat":127},"caps":{},"copies":505.0,"guns":462.0,"burn30":41.77137498261942,"n_apps":32,"n_cg":0,"n_dt":32}],"note":""};
+const SHORT = {"Stockholm 2021":"STO 21","Antwerp 2022":"ANT 22","Rio 2022":"RIO 22","Paris 2023":"PAR 23","Copenhagen 2024":"CPH 24","Shanghai 2024":"SHA 24","Austin 2025":"AUS 25","Budapest 2025":"BUD 25","Cologne 2026":"COL 26"};
+let capsOn = true;
+let picked = new Set(DATA.markets.map(m => m.name));
+try { const saved = JSON.parse(localStorage.getItem("mss.markets") || "null"); if (Array.isArray(saved)) picked = new Set(saved.filter(n => DATA.markets.some(m => m.name === n))); } catch (e) {}
+try { capsOn = localStorage.getItem("mss.caps") !== "0"; } catch (e) {}
+const sumPicked = (o) => Object.entries(o || {}).reduce((t, [k, v]) => picked.has(k) ? t + v : t, 0);
+const listed = g => sumPicked(g.mk);
+const sealed = g => capsOn ? sumPicked(g.caps) : 0;
+const supply = g => listed(g) + sealed(g);
+const $ = (s) => document.querySelector(s);
+const fmt = (v, d = 0) => v == null ? "n/a" : (Math.abs(v) >= 1e6 ? (v / 1e6).toFixed(2) + "M" : Math.abs(v) >= 1e4 ? (v / 1e3).toFixed(1) + "k" : v.toLocaleString("en-US", { maximumFractionDigits: d }));
+const full = (v, d = 0) => v == null ? "n/a" : v.toLocaleString("en-US", { maximumFractionDigits: d });
+const median = (a) => { const s = [...a].sort((x, y) => x - y); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, parent, text) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; if (parent) parent.appendChild(e); return e; }
+
+/* tooltip */
+const tip = $("#tip");
+function showTip(ev, html) { tip.innerHTML = html; tip.hidden = false; const r = tip.getBoundingClientRect(); let x = ev.clientX + 14, y = ev.clientY + 14; if (x + r.width > innerWidth - 8) x = ev.clientX - r.width - 14; if (y + r.height > innerHeight - 8) y = ev.clientY - r.height - 14; tip.style.left = x + "px"; tip.style.top = y + "px"; }
+function hideTip() { tip.hidden = true; }
+function tipHtml(g, title) {
+  return `<b>${title}</b>Applied <span>${full(g.copies)}</span><br>Stickers listed <span>${full(listed(g))}</span><br>Sealed in capsules <span>${capsOn ? full(sealed(g)) : "left out"}</span><br>Applied per unit of supply <span>${ratio(g) == null ? "n/a" : ratio(g).toFixed(1)}</span><br>Applied, last 30 d <span>${full(g.burn30)}</span>`;
+}
+
+function logTicks(lo, hi) { const t = []; for (let e = Math.floor(Math.log10(lo)); e <= Math.ceil(Math.log10(hi)); e++) for (const m of [1, 3]) { const v = m * 10 ** e; if (v >= lo && v <= hi) t.push(v); } return t; }
+
+/* scatter: points [{x,y,label,g,title}] */
+function scatter(host, pts, opts = {}) {
+  host.innerHTML = "";
+  const W = opts.w || 560, H = opts.h || 380, m = { l: 54, r: 18, t: 22, b: 40 };
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": opts.aria || "Scatter plot" }, host);
+  if (pts.length < 2) { el("text", { x: W / 2, y: H / 2, "text-anchor": "middle", class: "axis" }, svg, opts.empty || "Not enough data"); return; }
+  const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+  const pad = (a, b) => [a / 1.8, b * 1.8];
+  const [x0, x1] = pad(Math.min(...xs), Math.max(...xs)), [y0, y1] = pad(Math.min(...ys), Math.max(...ys));
+  const X = v => m.l + (Math.log10(v) - Math.log10(x0)) / (Math.log10(x1) - Math.log10(x0)) * (W - m.l - m.r);
+  const Y = v => H - m.b - (Math.log10(v) - Math.log10(y0)) / (Math.log10(y1) - Math.log10(y0)) * (H - m.t - m.b);
+  for (const t of logTicks(x0, x1)) { el("line", { x1: X(t), x2: X(t), y1: m.t, y2: H - m.b, class: "gl" }, svg); el("text", { x: X(t), y: H - m.b + 15, "text-anchor": "middle", class: "axis" }, svg, fmt(t)); }
+  for (const t of logTicks(y0, y1)) { el("line", { x1: m.l, x2: W - m.r, y1: Y(t), y2: Y(t), class: "gl" }, svg); el("text", { x: m.l - 6, y: Y(t) + 4, "text-anchor": "end", class: "axis" }, svg, fmt(t)); }
+  el("text", { x: W - m.r, y: H - 6, "text-anchor": "end", class: "axis-title" }, svg, "Supply on sale today →");
+  el("text", { x: 12, y: m.t - 8, class: "axis-title" }, svg, "↑ Stickers applied");
+  const mx = median(xs), my = median(ys);
+  el("line", { x1: X(mx), x2: X(mx), y1: m.t, y2: H - m.b, class: "med" }, svg);
+  el("line", { x1: m.l, x2: W - m.r, y1: Y(my), y2: Y(my), class: "med" }, svg);
+  el("text", { x: m.l + 6, y: m.t + 12, class: "qlabel", fill: "var(--good)" }, svg, "Scarce, wanted");
+  el("text", { x: W - m.r - 6, y: H - m.b - 8, "text-anchor": "end", class: "qlabel", fill: "var(--bad)" }, svg, "Flooded, unused");
+  const boxes = pts.map(p => ({ x0: X(p.x) - 7, x1: X(p.x) + 7, y0: Y(p.y) - 7, y1: Y(p.y) + 7 }));
+  const hit = (a, b) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+  for (const p of pts) {
+    const cx = X(p.x), cy = Y(p.y);
+    const q = p.x <= mx && p.y >= my ? "var(--good)" : p.x > mx && p.y < my ? "var(--bad)" : "var(--mid)";
+    const c = el("circle", { cx, cy, r: 6, fill: q, class: "dot", tabindex: 0, "aria-label": `${p.title}: ${full(p.y)} applied, ${full(p.x)} on sale` }, svg);
+    c.addEventListener("mousemove", e => showTip(e, tipHtml(p.g, p.title)));
+    c.addEventListener("mouseleave", hideTip);
+    c.addEventListener("focus", () => { const b = c.getBoundingClientRect(); showTip({ clientX: b.right, clientY: b.bottom }, tipHtml(p.g, p.title)); });
+    c.addEventListener("blur", hideTip);
+    const tw = p.label.length * 6.8;
+    const spots = [[cx + 10, cy + 4, "start"], [cx - 10, cy + 4, "end"], [cx, cy - 11, "middle"], [cx, cy + 19, "middle"]];
+    for (const [lx, ly, anchor] of spots) {
+      const x0 = anchor === "start" ? lx : anchor === "end" ? lx - tw : lx - tw / 2;
+      const box = { x0, x1: x0 + tw, y0: ly - 10, y1: ly + 3 };
+      if (box.x0 < m.l || box.x1 > W - m.r + 4 || boxes.some(b => hit(b, box))) continue;
+      boxes.push(box);
+      el("text", { x: lx, y: ly, "text-anchor": anchor, class: "plabel" }, svg, p.label);
+      break;
+    }
+  }
+}
+
+function bars(host, rows) {
+  host.innerHTML = "";
+  const items = rows.filter(r => r.days != null);
+  const W = 420, rowH = 30, m = { l: 62, r: 64, t: 6, b: 8 }, H = m.t + m.b + Math.max(items.length, 1) * rowH;
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Days of listings per Major" }, host);
+  if (!items.length) { el("text", { x: W / 2, y: H / 2 + 4, "text-anchor": "middle", class: "axis" }, svg, "No 30-day data"); return; }
+  const max = Math.max(...items.map(r => r.days));
+  items.forEach((r, i) => {
+    const y = m.t + i * rowH, w = Math.max(2, (r.days / max) * (W - m.l - m.r));
+    el("text", { x: m.l - 8, y: y + rowH / 2 + 4, "text-anchor": "end", class: "axis", style: "fill:var(--ink-2)" }, svg, r.label);
+    const b = el("path", { d: `M${m.l},${y + 8} h${w - 4} a4,4 0 0 1 4,4 v${rowH - 24} a4,4 0 0 1 -4,4 h${-(w - 4)} z`, fill: "var(--accent)", tabindex: 0 }, svg);
+    b.addEventListener("mousemove", e => showTip(e, `<b>${r.title}</b>Supply on sale <span>${full(r.listed)}</span><br>Applied per day <span>${full(r.perDay, 1)}</span><br>Days of listings <span>${full(r.days)}</span>`));
+    b.addEventListener("mouseleave", hideTip);
+    el("text", { x: m.l + w + 6, y: y + rowH / 2 + 4, class: "axis", style: "fill:var(--ink)" }, svg, full(r.days) + " d");
+  });
+}
+
+function table(tbl, cols, rows, state) {
+  const sortRows = () => { const c = cols[state.col]; const k = c.v; return [...rows].sort((a, b) => { const x = k(a), y = k(b); if (x == null) return 1; if (y == null) return -1; return (x < y ? -1 : x > y ? 1 : 0) * (state.dir === "asc" ? 1 : -1); }); };
+  const render = () => {
+    tbl.innerHTML = "";
+    const tr = tbl.createTHead().insertRow();
+    cols.forEach((c, i) => { const th = document.createElement("th"); if (c.left) th.className = "l"; if (i === state.col) th.setAttribute("aria-sort", state.dir === "asc" ? "ascending" : "descending"); const b = document.createElement("button"); b.textContent = c.h; b.onclick = () => { state.dir = state.col === i && state.dir === "desc" ? "asc" : "desc"; state.col = i; render(); }; th.appendChild(b); tr.appendChild(th); });
+    const tb = tbl.createTBody();
+    for (const r of sortRows()) { const row = tb.insertRow(); cols.forEach(c => { const td = row.insertCell(); const out = c.f ? c.f(r) : full(c.v(r)); if (c.left) td.className = "l"; if (c.v(r) == null && !c.f) td.className += " na"; td.innerHTML = out; }); }
+  };
+  render();
+}
+
+const ratio = g => g.copies != null && supply(g) ? g.copies / supply(g) : null;
+const days = g => supply(g) && g.burn30 > 0 ? supply(g) / (g.burn30 / 30) : null;
+function verdict(g, mx, my) { const x = supply(g); if (g.copies == null || !x) return `<span class="pill">no data</span>`; if (x <= mx && g.copies >= my) return `<span class="pill good">scarce, wanted</span>`; if (x > mx && g.copies < my) return `<span class="pill bad">flooded</span>`; return `<span class="pill">mixed</span>`; }
+const supplyCols = () => [
+  { h: "Stickers listed", v: listed },
+  { h: "Sealed capsules", v: g => capsOn ? sealed(g) : null, f: g => capsOn ? full(sealed(g)) : "left out" },
+  { h: "Supply", v: supply },
+];
+
+const tState = { major: { col: 0, dir: "asc" }, variant: { col: 0, dir: "asc" } };
+function renderMajor() {
+  const gs = DATA.by_major.map(g => ({ ...g, idx: DATA.majors.indexOf(g.key) }));
+  const pts = gs.filter(g => g.copies && supply(g)).map(g => ({ x: supply(g), y: g.copies, label: SHORT[g.key], title: g.key, g }));
+  scatter($("#scatter-major"), pts, { aria: "Stickers applied against listings, per Major" });
+  const mx = median(pts.map(p => p.x)), my = median(pts.map(p => p.y));
+  $("#legend-major").innerHTML = `<span><i style="background:var(--good)"></i>Below median supply, above median applied</span><span><i style="background:var(--bad)"></i>Above median supply, below median applied</span><span><i style="background:var(--mid)"></i>Mixed</span>`;
+  bars($("#bars-major"), gs.map(g => ({ label: SHORT[g.key], title: g.key, days: days(g), listed: supply(g), perDay: g.burn30 != null ? g.burn30 / 30 : null })).filter(r => r.days != null).sort((a, b) => a.days - b.days));
+  table($("#table-major"), [
+    { h: "Major", left: true, v: g => g.idx, f: g => g.key },
+    ...supplyCols(),
+    { h: "Applied", v: g => g.copies },
+    { h: "Guns", v: g => g.guns },
+    { h: "Applied, 30 d", v: g => g.burn30 },
+    { h: "Applied / supply", v: ratio, f: g => full(ratio(g), 1) },
+    { h: "Days of listings", v: days, f: g => full(days(g)) },
+    { h: "Reading", left: true, v: ratio, f: g => verdict(g, mx, my) },
+  ], gs, tState.major);
+}
+
+function renderVariant() {
+  const host = $("#multiples"); host.innerHTML = "";
+  for (const v of DATA.variants) {
+    const gs = DATA.by_major_variant.filter(g => g.key[1] === v);
+    if (!gs.length) continue;
+    const card = document.createElement("div"); card.className = "card";
+    const pts = gs.filter(g => g.copies && supply(g)).map(g => ({ x: supply(g), y: g.copies, label: SHORT[g.key[0]], title: `${g.key[0]} · ${v}`, g }));
+    card.innerHTML = `<h2>${v}</h2><p>${pts.length} Major${pts.length > 1 ? "s" : ""} with data</p><div></div>`;
+    host.appendChild(card);
+    scatter(card.lastElementChild, pts, { w: 420, h: 320, aria: `${v} stickers applied against listings, per Major`, empty: pts.length === 1 ? `Only ${pts[0].title.split(" · ")[0]} has ${v}: see the table` : "No data" });
+  }
+  const all = DATA.by_major_variant.map(g => ({ ...g, idx: DATA.majors.indexOf(g.key[0]) * 10 + DATA.variants.indexOf(g.key[1]) }));
+  const med = {}; for (const v of DATA.variants) { const p = all.filter(g => g.key[1] === v && g.copies && supply(g)); if (p.length) med[v] = [median(p.map(supply)), median(p.map(g => g.copies))]; }
+  table($("#table-variant"), [
+    { h: "Major", left: true, v: g => g.idx, f: g => g.key[0] },
+    { h: "Variant", left: true, v: g => DATA.variants.indexOf(g.key[1]), f: g => g.key[1] },
+    ...supplyCols(),
+    { h: "Applied", v: g => g.copies },
+    { h: "Applied, 30 d", v: g => g.burn30 },
+    { h: "Applied / supply", v: ratio, f: g => full(ratio(g), 1) },
+    { h: "Days of listings", v: days, f: g => full(days(g)) },
+    { h: "Reading", left: true, v: ratio, f: g => med[g.key[1]] ? verdict(g, ...med[g.key[1]]) : `<span class="pill">no data</span>` },
+  ], all, tState.variant);
+}
+
+function render() { renderMajor(); renderVariant(); }
+function syncCaps() { $("#caps-on").setAttribute("aria-pressed", capsOn); $("#caps-off").setAttribute("aria-pressed", !capsOn); }
+for (const b of document.querySelectorAll(".seg button")) b.addEventListener("click", () => { capsOn = b.dataset.caps === "1"; syncCaps(); try { localStorage.setItem("mss.caps", capsOn ? "1" : "0"); } catch (e) {} render(); });
+function buildMarkets() {
+  const host = $("#mkt-list"); host.innerHTML = "";
+  DATA.markets.forEach((m, i) => {
+    const lab = document.createElement("label");
+    lab.innerHTML = `<input type="checkbox" id="mkt-${i}"><b></b><small>${fmt(m.listings)}</small>`;
+    lab.querySelector("b").textContent = m.name;
+    const cb = lab.querySelector("input"); cb.checked = picked.has(m.name);
+    cb.addEventListener("change", () => { cb.checked ? picked.add(m.name) : picked.delete(m.name); onMarkets(); });
+    host.appendChild(lab);
+  });
+}
+function onMarkets() {
+  try { localStorage.setItem("mss.markets", JSON.stringify([...picked])); } catch (e) {}
+  DATA.markets.forEach((m, i) => { $("#mkt-" + i).checked = picked.has(m.name); });
+  const n = picked.size, all = DATA.markets.length;
+  $("#mkt-sum").textContent = n === all ? `all ${all} ticked` : n === 1 && picked.has("Steam") ? "Steam only" : `${n} of ${all} ticked`;
+  render();
+}
+for (const b of document.querySelectorAll("[data-preset]")) b.addEventListener("click", () => {
+  const p = b.dataset.preset; picked = new Set(p === "all" ? DATA.markets.map(m => m.name) : p === "steam" ? ["Steam"] : []); onMarkets();
+});
+function selectTab(id) {
+  const major = id === "major";
+  $("#tab-major").setAttribute("aria-selected", major); $("#tab-variant").setAttribute("aria-selected", !major);
+  $("#view-major").hidden = !major; $("#view-variant").hidden = major;
+  try { localStorage.setItem("mss.tab", id); } catch (e) {}
+}
+$("#tab-major").onclick = () => selectTab("major");
+$("#tab-variant").onclick = () => selectTab("variant");
+$("#meta").textContent = `Built ${DATA.generated.replace("T", " ")} UTC · ${DATA.n_stickers} team stickers · ${DATA.capsules.length} team capsules · ${DATA.majors.length} Majors`;
+const d = DATA.dates, day = (x) => x ? x.slice(0, 10) : "n/a";
+$("#dates").innerHTML = `<b>Capture dates</b>: applications ${day(d.tracker)} (latest tracker snapshot), Steam ${day(d.steam)}, SteamDT ${day(d.steamdt)}, CSFloat, Skinport, Waxpeer and Market.CSGO ${day(d.feeds)}. Updated on request.`;
+if (DATA.note) { $("#interim").textContent = DATA.note; $("#interim").hidden = false; }
+syncCaps(); buildMarkets(); onMarkets();
+let start = location.hash === "#variant" ? "variant" : null;
+try { start = start || localStorage.getItem("mss.tab"); } catch (e) {}
+if (start === "variant") selectTab("variant");
+</script>
+
+</body></html>

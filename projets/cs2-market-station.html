@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CS2 Market Station, Rafael Teixeira</title>
+<meta name="description" content="Tableau de bord du marché des objets de Counter-Strike 2 : 113 produits, prix CSFloat et Steam, indices et études, mis à jour chaque nuit.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="projet.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <a class="back" href="../index.html">&larr; <span class="fr">Tous les projets</span><span class="en">All projects</span></a>
+    <div class="lang" role="group" aria-label="Langue / Language">
+      <button type="button" data-lang="fr" aria-pressed="true">FR</button>
+      <button type="button" data-lang="en" aria-pressed="false">EN</button>
+    </div>
+  </header>
+
+  <div class="hero">
+    <p class="tag">Counter-Strike 2 · <span class="fr">tableau de bord</span><span class="en">dashboard</span></p>
+    <h1>CS2 Market Station</h1>
+    <p class="lead">
+      <span class="fr">Un tableau de bord du marché des objets de Counter-Strike 2 : 113 produits suivis (caisses, capsules et stickers des Majors), avec les prix CSFloat et Steam, jusqu'à cinq ans d'historique et une mise à jour chaque nuit.</span>
+      <span class="en">A market dashboard for Counter-Strike 2 items: 113 tracked products (cases, Major capsules and stickers), CSFloat and Steam prices, up to five years of history, refreshed every night.</span>
+    </p>
+    <div class="links">
+      <a class="btn primary" href="../demo/station/"><span class="fr">Voir la démo</span><span class="en">Open the demo</span> &rarr;</a>
+    </div>
+  </div>
+
+  <figure class="shot">
+    <img src="../img/cs2-market-station.jpg" alt="Onglet Courbes : une fiche par capsule avec sa courbe de prix" width="1440" height="900">
+    <figcaption><span class="fr">Courbes : une fiche par objet, avec son prix, sa courbe et ses chiffres clés.</span><span class="en">Charts: one card per item, with its price, curve and key figures.</span></figcaption>
+  </figure>
+  <div class="gallery">
+    <figure class="shot">
+      <img src="../img/station-indices.jpg" alt="Onglet Indices : évolution d'un indice de marché" loading="lazy" width="1440" height="900">
+      <figcaption><span class="fr">Indices : un indice par famille d'objets.</span><span class="en">Indices: one index per item family.</span></figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="../img/station-etude.jpg" alt="Onglet Études : verdict et chiffres de l'étude Holo" loading="lazy" width="1440" height="900">
+      <figcaption><span class="fr">Études : les Majors comparés au même âge.</span><span class="en">Studies: Majors compared at the same age.</span></figcaption>
+    </figure>
+  </div>
+
+  <section>
+    <div class="cols">
+      <div>
+        <h2><span class="fr">Le besoin</span><span class="en">The need</span></h2>
+        <p><span class="fr">Suivre un marché d'objets virtuels dont les prix bougent chaque jour, sur deux places de marché qui n'ont ni les mêmes frais ni le même historique, sans passer chaque soir d'une page à l'autre.</span><span class="en">Follow a virtual item market whose prices move every day, across two marketplaces with different fees and histories, without jumping between pages every evening.</span></p>
+      </div>
+      <div>
+        <h2><span class="fr">Ce que j'ai construit</span><span class="en">What I built</span></h2>
+        <ul class="built">
+          <li><span class="fr"><b>Dashboard</b> : quatre indices de marché et leur variation sur 24 heures, 7 et 30 jours.</span><span class="en"><b>Dashboard</b>: four market indices and their 24-hour, 7-day and 30-day change.</span></li>
+          <li><span class="fr"><b>Courbes</b> : plus haut, plus bas, ventes par jour et plus basse annonce pour chaque objet, sur un horizon allant de la journée à toute sa durée de vie.</span><span class="en"><b>Charts</b>: high, low, daily sales and lowest listing for each item, from one day to its whole lifetime.</span></li>
+          <li><span class="fr"><b>Indices</b> : caisses, capsules, stickers et skins, recalculés chaque nuit.</span><span class="en"><b>Indices</b>: cases, capsules, stickers and skins, recomputed every night.</span></li>
+          <li><span class="fr"><b>Études</b> : huit analyses qui comparent les objets d'un Major à ceux des autres au même âge.</span><span class="en"><b>Studies</b>: eight analyses comparing each Major's items with the others at the same age.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="fr">Comment ça marche</span><span class="en">How it works</span></h2>
+    <div class="steps">
+      <div class="step"><div class="n">01</div>
+        <h3><span class="fr">Collecter</span><span class="en">Collect</span></h3>
+        <p><span class="fr">Chaque nuit, une routine dans le cloud lance un script Python qui relève l'historique des ventes Steam et les prix CSFloat.</span><span class="en">Every night, a cloud routine runs a Python script that pulls Steam sales history and CSFloat prices.</span></p></div>
+      <div class="step"><div class="n">02</div>
+        <h3><span class="fr">Préparer</span><span class="en">Prepare</span></h3>
+        <p><span class="fr">Les séries sont fusionnées et converties en dollars ; pour les études, les pics de manipulation sont retirés.</span><span class="en">Series are merged and converted to dollars; for the studies, manipulation spikes are removed.</span></p></div>
+      <div class="step"><div class="n">03</div>
+        <h3><span class="fr">Afficher</span><span class="en">Display</span></h3>
+        <p><span class="fr">Une page web unique lit ces données et trace les courbes ; produits et onglets s'ajoutent depuis la page.</span><span class="en">A single web page reads the data and draws the charts; products and tabs are added from the page itself.</span></p></div>
+    </div>
+    <p class="note"><span class="fr">La démo est une copie figée du 10/11/2026, avec les mêmes données et les mêmes onglets. Mon portefeuille personnel et la méta-analyse restent privés.</span><span class="en">The demo is a frozen copy from 10 Nov 2026, with the same data and tabs. My personal holdings and the meta-analysis stay private.</span></p>
+  </section>
+
+  <section>
+    <h2><span class="fr">Outils</span><span class="en">Tools</span></h2>
+    <div class="chips"><span class="chip">HTML/CSS/JS</span><span class="chip">Python</span><span class="chip">API CSFloat &amp; Steam</span><span class="chip">Lightweight Charts</span><span class="chip"><span class="fr">Routine cloud</span><span class="en">Cloud routine</span></span><span class="chip">Claude Code</span></div>
+  </section>
+
+  <footer>
+    <a href="../index.html"><span class="fr">Retour au portfolio</span><span class="en">Back to portfolio</span></a> · <a href="https://www.linkedin.com/in/rafaelteixeira-sor" target="_blank" rel="noopener">LinkedIn</a> · <a href="mailto:fr.di@hotmail.fr">fr.di@hotmail.fr</a>
+  </footer>
+</div>
+<script src="projet.js"></script>
+</body>
+</html>

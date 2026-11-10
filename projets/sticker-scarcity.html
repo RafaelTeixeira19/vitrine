@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Major Sticker Scarcity, Rafael Teixeira</title>
+<meta name="description" content="Quels stickers d'équipe de Counter-Strike 2 se raréfient ? 960 stickers de 9 Majors, appliqués face à l'offre en vente, et un outil de répartition de budget.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="projet.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <a class="back" href="../index.html">&larr; <span class="fr">Tous les projets</span><span class="en">All projects</span></a>
+    <div class="lang" role="group" aria-label="Langue / Language">
+      <button type="button" data-lang="fr" aria-pressed="true">FR</button>
+      <button type="button" data-lang="en" aria-pressed="false">EN</button>
+    </div>
+  </header>
+
+  <div class="hero">
+    <p class="tag">Esport · <span class="fr">analyse de données</span><span class="en">data analysis</span></p>
+    <h1>Major Sticker Scarcity <span class="fr">et</span><span class="en">&amp;</span> Capsule Allocator</h1>
+    <p class="lead">
+      <span class="fr">Quels stickers d'équipe se raréfient ? L'étude porte sur 960 stickers de 9 Majors, de Stockholm 2021 à Cologne 2026, et compare ceux qui ont été collés sur des armes, donc retirés du marché pour de bon, à ceux qui sont encore en vente.</span>
+      <span class="en">Which team stickers are becoming scarce? 960 stickers from 9 Majors, Stockholm 2021 to Cologne 2026, comparing those applied to guns (gone from the market for good) with those still for sale.</span>
+    </p>
+    <div class="links">
+      <a class="btn primary" href="../demo/sticker-scarcity/"><span class="fr">Démo : vue par Major</span><span class="en">Demo: per-Major view</span> &rarr;</a>
+      <a class="btn" href="../demo/sticker-scarcity/stickers.html"><span class="fr">Vue par sticker</span><span class="en">Per-sticker view</span></a>
+      <a class="btn" href="../demo/capsule-allocator/">Capsule Allocator</a>
+    </div>
+  </div>
+
+  <figure class="shot">
+    <img src="../img/sticker-board.jpg" alt="Vue par sticker : stickers appliqués face à l'offre, un point par sticker" width="1440" height="900">
+    <figcaption><span class="fr">Vue par sticker : en haut à gauche, très appliqués et rares ; en bas à droite, abondants et délaissés.</span><span class="en">Per-sticker view: top left, heavily applied and scarce; bottom right, plentiful and ignored.</span></figcaption>
+  </figure>
+  <div class="gallery">
+    <figure class="shot">
+      <img src="../img/sticker-scarcity.jpg" alt="Vue par Major : stickers appliqués et offre par Major" loading="lazy" width="1440" height="900">
+      <figcaption><span class="fr">Vue par Major et par finition.</span><span class="en">Per-Major and per-finish view.</span></figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="../img/capsule-allocator.jpg" alt="Capsule Allocator : répartition d'un budget entre les capsules" loading="lazy" width="1440" height="900">
+      <figcaption><span class="fr">Capsule Allocator : un budget réparti entre 21 capsules.</span><span class="en">Capsule Allocator: a budget split across 21 capsules.</span></figcaption>
+    </figure>
+  </div>
+
+  <section>
+    <div class="cols">
+      <div>
+        <h2><span class="fr">Le besoin</span><span class="en">The need</span></h2>
+        <p><span class="fr">Personne ne publie le nombre de stickers en circulation : Valve ne communique rien. Pour savoir lesquels deviennent rares, il fallait reconstituer l'offre et la demande à partir de ce qui s'observe.</span><span class="en">Nobody publishes how many stickers exist: Valve discloses nothing. To find out which ones are getting scarce, supply and demand had to be rebuilt from what can be observed.</span></p>
+      </div>
+      <div>
+        <h2><span class="fr">Ce que j'ai construit</span><span class="en">What I built</span></h2>
+        <ul class="built">
+          <li><span class="fr">Une vue par Major et par finition (Paper, Glitter, Holo, Foil, Gold, Embroidered), et une vue par sticker en nuage de points.</span><span class="en">A per-Major, per-finish view (Paper, Glitter, Holo, Foil, Gold, Embroidered) and a per-sticker scatter view.</span></li>
+          <li><span class="fr">Une offre additionnée sur 9 places de marché, capsules encore scellées comprises ; chaque marché peut être retiré du calcul.</span><span class="en">Supply summed across 9 marketplaces, sealed capsules included; each market can be left out of the count.</span></li>
+          <li><span class="fr">Le Capsule Allocator, qui répartit un budget entre 21 capsules selon la tendance de leur prix et la vitesse à laquelle leurs stickers sont consommés. La répartition se recalcule à chaque saisie.</span><span class="en">The Capsule Allocator, which splits a budget across 21 capsules by price trend and by how fast their stickers are being used up. The split updates as you type.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="fr">Comment ça marche</span><span class="en">How it works</span></h2>
+    <div class="steps">
+      <div class="step"><div class="n">01</div>
+        <h3><span class="fr">Collecter</span><span class="en">Collect</span></h3>
+        <p><span class="fr">La liste des stickers vient d'une base ouverte, les applications d'un service de suivi interrogé à un rythme qui respecte ses limites, les annonces de 9 places de marché.</span><span class="en">The sticker list comes from an open database, applications from a tracking service queried within its rate limits, listings from 9 marketplaces.</span></p></div>
+      <div class="step"><div class="n">02</div>
+        <h3><span class="fr">Croiser</span><span class="en">Combine</span></h3>
+        <p><span class="fr">Un script Python rapproche les trois sources sticker par sticker et convertit les capsules scellées en stickers.</span><span class="en">A Python script matches the three sources sticker by sticker and converts sealed capsules into stickers.</span></p></div>
+      <div class="step"><div class="n">03</div>
+        <h3><span class="fr">Rafraîchir</span><span class="en">Refresh</span></h3>
+        <p><span class="fr">Les pages se reconstruisent à la demande, avec la date de chaque relevé affichée en tête.</span><span class="en">The pages are rebuilt on demand, with the date of each data pull shown at the top.</span></p></div>
+    </div>
+    <p class="note"><span class="fr">La démo est une copie figée : les données datent du 19/10/2026.</span><span class="en">The demo is a frozen copy: data as of 19 Oct 2026.</span></p>
+  </section>
+
+  <section>
+    <h2><span class="fr">Outils</span><span class="en">Tools</span></h2>
+    <div class="chips"><span class="chip">Python</span><span class="chip">CSV</span><span class="chip"><span class="fr">API publiques</span><span class="en">Public APIs</span></span><span class="chip"><span class="fr">Visualisation</span><span class="en">Data viz</span></span><span class="chip">Claude Code</span></div>
+  </section>
+
+  <footer>
+    <a href="../index.html"><span class="fr">Retour au portfolio</span><span class="en">Back to portfolio</span></a> · <a href="https://www.linkedin.com/in/rafaelteixeira-sor" target="_blank" rel="noopener">LinkedIn</a> · <a href="mailto:fr.di@hotmail.fr">fr.di@hotmail.fr</a>
+  </footer>
+</div>
+<script src="projet.js"></script>
+</body>
+</html>

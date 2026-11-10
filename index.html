@@ -51,8 +51,15 @@
   .step h3 { margin: 6px 0 6px; font-size: 18px; }
   .step p { margin: 0; color: var(--muted); font-size: 15.5px; }
 
-  .project { display: grid; grid-template-columns: 1.25fr 1fr; gap: 28px; align-items: start; margin-bottom: 44px; }
+  .project { position: relative; display: grid; grid-template-columns: 1.25fr 1fr; gap: 28px; align-items: start; margin-bottom: 44px; }
   .project:last-child { margin-bottom: 0; }
+  .project h3 a { text-decoration: none; }
+  .project h3 a::after { content: ""; position: absolute; inset: -8px; border-radius: 18px; }
+  .project h3 a:focus-visible { outline: none; }
+  .project h3 a:focus-visible::after { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .project:hover .shot, .project:hover .report { box-shadow: 0 16px 36px rgba(0,0,0,.14); }
+  .project:hover .more { text-decoration: underline; }
+  .more { display: inline-block; margin-top: 14px; color: var(--accent); font-weight: 600; font-size: 15px; }
   .shot { border-radius: 14px; overflow: hidden; border: 1px solid var(--line); background: var(--surface); box-shadow: 0 12px 30px rgba(0,0,0,.08); }
   .shot img { display: block; width: 100%; height: auto; }
   .project h3 { font-size: 26px; margin: 0; letter-spacing: -0.01em; }
@@ -124,7 +131,7 @@
       <div class="shot"><img src="img/cs2-market-station.jpg" alt="CS2 Market Station : courbes de prix des capsules de stickers" loading="lazy" width="1440" height="900"></div>
       <div>
         <p class="tag">Counter-Strike 2 · <span class="fr">tableau de bord</span><span class="en">dashboard</span></p>
-        <h3>CS2 Market Station</h3>
+        <h3><a href="projets/cs2-market-station.html">CS2 Market Station</a></h3>
         <p><span class="fr">Un tableau de bord du marché des objets de Counter-Strike 2 : 113 produits suivis (capsules et stickers des Majors), avec les prix CSFloat et Steam et jusqu'à cinq ans d'historique.</span><span class="en">A market dashboard for Counter-Strike 2 items: 113 tracked products (Major capsules and stickers), CSFloat and Steam prices, history up to five years.</span></p>
         <ul>
           <li><span class="fr">Mise à jour automatique des prix chaque nuit</span><span class="en">Prices refreshed automatically every night</span></li>
@@ -132,6 +139,7 @@
           <li><span class="fr">Plus haut, plus bas, volumes de vente et annonces par produit</span><span class="en">High, low, sales volume and listings per product</span></li>
         </ul>
         <div class="chips"><span class="chip">HTML/CSS/JS</span><span class="chip">Python</span><span class="chip">API CSFloat &amp; Steam</span><span class="chip">Claude Code</span></div>
+        <span class="more"><span class="fr">Voir le projet et la démo</span><span class="en">See the project and demo</span> &rarr;</span>
       </div>
     </article>
 
@@ -139,13 +147,14 @@
       <div class="shot"><img src="img/sticker-scarcity.jpg" alt="Major Sticker Scarcity : stickers appliqués contre offre en vente, par Major" loading="lazy" width="1440" height="900"></div>
       <div>
         <p class="tag">Esport · <span class="fr">analyse de données</span><span class="en">data analysis</span></p>
-        <h3>Major Sticker Scarcity <span class="fr">et</span><span class="en">&amp;</span> Capsule Allocator</h3>
+        <h3><a href="projets/sticker-scarcity.html">Major Sticker Scarcity <span class="fr">et</span><span class="en">&amp;</span> Capsule Allocator</a></h3>
         <p><span class="fr">Quels stickers d'équipe se raréfient ? L'étude porte sur 960 stickers issus de 9 Majors depuis 2021 et compare ceux qui ont été collés sur des armes, donc retirés du marché pour de bon, à ceux qui sont encore en vente.</span><span class="en">Which team stickers are becoming scarce? 960 stickers from 9 Majors since 2021, comparing what has been applied to guns (consumed for good) with what is still for sale.</span></p>
         <ul>
           <li><span class="fr">Offre additionnée sur plusieurs places de marché, capsules encore scellées comprises</span><span class="en">Supply aggregated across several marketplaces, sealed capsules included</span></li>
           <li><span class="fr">Un second outil répartit un budget entre 21 capsules selon l'évolution des prix et la rareté</span><span class="en">A companion tool splits a budget across 21 capsules based on price trend and scarcity</span></li>
         </ul>
         <div class="chips"><span class="chip">Python</span><span class="chip">CSV</span><span class="chip"><span class="fr">Visualisation</span><span class="en">Data viz</span></span><span class="chip">Claude Code</span></div>
+        <span class="more"><span class="fr">Voir le projet et la démo</span><span class="en">See the project and demo</span> &rarr;</span>
       </div>
     </article>
 
@@ -160,7 +169,7 @@
       </div>
       <div>
         <p class="tag"><span class="fr">Automatisation · données publiques</span><span class="en">Automation · public data</span></p>
-        <h3>Veille JO</h3>
+        <h3><a href="projets/veille-jo.html">Veille JO</a></h3>
         <p><span class="fr">Chaque jour ouvré à 8 h 30, un rapport sur le Journal officiel français et le Journal officiel de l'Union européenne, filtré sur une liste de mots-clés, classé par pertinence, avec un court résumé et le lien de chaque texte.</span><span class="en">Every working day at 8:30, a report on the French and EU Official Journals, filtered on a keyword list, ranked by relevance, with a short summary and a link for each text.</span></p>
         <ul>
           <li><span class="fr">Collecte à partir des données ouvertes de la DILA et de l'Office des publications</span><span class="en">Collected from DILA and Publications Office open data</span></li>
@@ -168,6 +177,7 @@
           <li><span class="fr">Le rapport précise ce qu'il a pu vérifier et ce qui reste incertain</span><span class="en">The report states what it could verify and what remains uncertain</span></li>
         </ul>
         <div class="chips"><span class="chip">Python</span><span class="chip">Open data</span><span class="chip">Claude Code</span><span class="chip"><span class="fr">Routine cloud</span><span class="en">Cloud routine</span></span></div>
+        <span class="more"><span class="fr">Voir le projet et la démo</span><span class="en">See the project and demo</span> &rarr;</span>
       </div>
     </article>
   </section>

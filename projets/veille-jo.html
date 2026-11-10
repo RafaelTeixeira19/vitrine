@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Veille JO, Rafael Teixeira</title>
+<meta name="description" content="Chaque jour ouvré à 8 h 30, un rapport sur le Journal officiel français et celui de l'Union européenne, filtré sur des mots-clés douane et énergie.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="projet.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <a class="back" href="../index.html">&larr; <span class="fr">Tous les projets</span><span class="en">All projects</span></a>
+    <div class="lang" role="group" aria-label="Langue / Language">
+      <button type="button" data-lang="fr" aria-pressed="true">FR</button>
+      <button type="button" data-lang="en" aria-pressed="false">EN</button>
+    </div>
+  </header>
+
+  <div class="hero">
+    <p class="tag"><span class="fr">Automatisation · données publiques</span><span class="en">Automation · public data</span></p>
+    <h1>Veille JO</h1>
+    <p class="lead">
+      <span class="fr">Chaque jour ouvré à 8 h 30, un rapport sur le Journal officiel français et celui de l'Union européenne, filtré sur 43 mots-clés douane et énergie, classé par pertinence, avec un court résumé et le lien de chaque texte.</span>
+      <span class="en">Every working day at 8:30, a report on the French and EU Official Journals, filtered on 43 customs and energy keywords, ranked by relevance, with a short summary and a link for each text.</span>
+    </p>
+    <div class="links">
+      <a class="btn primary" href="../demo/veille-jo/"><span class="fr">Voir la démo</span><span class="en">Open the demo</span> &rarr;</a>
+    </div>
+  </div>
+
+  <figure class="shot">
+    <img src="../img/veille-jo.jpg" alt="Page Veille JO : liste des rapports et rapport du 10 novembre 2026" width="1440" height="900">
+    <figcaption><span class="fr">La page des rapports : un rapport par jour, les précédents à gauche.</span><span class="en">The report page: one report a day, earlier ones on the left (in French).</span></figcaption>
+  </figure>
+
+  <section>
+    <div class="cols">
+      <div>
+        <h2><span class="fr">Le besoin</span><span class="en">The need</span></h2>
+        <p><span class="fr">Parcourir chaque matin le JORF et le JOUE à la recherche des textes qui touchent la fiscalité de l'énergie et la douane prend du temps, et un texte important peut passer inaperçu.</span><span class="en">Going through the French and EU Official Journals every morning for texts on energy taxation and customs takes time, and an important text can slip through.</span></p>
+      </div>
+      <div>
+        <h2><span class="fr">Ce que j'ai construit</span><span class="en">What I built</span></h2>
+        <ul class="built">
+          <li><span class="fr">Un rapport du matin, toujours sur le même modèle : une phrase d'ouverture, puis pour chaque journal les textes pertinents, ceux plus éloignés et les faux positifs écartés.</span><span class="en">A morning report, always in the same format: an opening sentence, then for each journal the relevant texts, the more distant ones and the false positives set aside.</span></li>
+          <li><span class="fr">Le rapport dit ce qu'il a pu vérifier et ce qui reste incertain : nombre de textes lus en entier, actes contrôlés.</span><span class="en">The report states what it could verify and what remains uncertain: texts read in full, acts checked.</span></li>
+          <li><span class="fr">Le lundi, il couvre aussi les journaux du week-end.</span><span class="en">On Mondays it also covers the weekend journals.</span></li>
+          <li><span class="fr">Une page qui garde l'historique des rapports et se lit aussi sur téléphone.</span><span class="en">A page that keeps the report history and also reads well on a phone.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="fr">Comment ça marche</span><span class="en">How it works</span></h2>
+    <div class="steps">
+      <div class="step"><div class="n">01</div>
+        <h3><span class="fr">Collecter</span><span class="en">Collect</span></h3>
+        <p><span class="fr">Un script Python lit les données ouvertes de la DILA pour le JORF et celles de l'Office des publications pour le JOUE.</span><span class="en">A Python script reads DILA open data for the French journal and Publications Office data for the EU journal.</span></p></div>
+      <div class="step"><div class="n">02</div>
+        <h3><span class="fr">Rédiger</span><span class="en">Write</span></h3>
+        <p><span class="fr">Un agent IA lit les textes retenus et rédige le rapport selon des consignes écrites une fois pour toutes.</span><span class="en">An AI agent reads the selected texts and writes the report from fixed written instructions.</span></p></div>
+      <div class="step"><div class="n">03</div>
+        <h3><span class="fr">Publier</span><span class="en">Publish</span></h3>
+        <p><span class="fr">La routine tourne dans le cloud et dépose le rapport sur la page à 8 h 30, sans aucune intervention.</span><span class="en">The routine runs in the cloud and posts the report to the page at 8:30, hands-off.</span></p></div>
+    </div>
+    <p class="note"><span class="fr">La démo reprend les cinq derniers rapports, du 4 au 10 novembre 2026.</span><span class="en">The demo shows the last five reports, 4 to 10 November 2026.</span></p>
+  </section>
+
+  <section>
+    <h2><span class="fr">Outils</span><span class="en">Tools</span></h2>
+    <div class="chips"><span class="chip">Python</span><span class="chip">Open data</span><span class="chip"><span class="fr">Agent IA</span><span class="en">AI agent</span></span><span class="chip"><span class="fr">Routine cloud</span><span class="en">Cloud routine</span></span><span class="chip">Claude Code</span></div>
+  </section>
+
+  <footer>
+    <a href="../index.html"><span class="fr">Retour au portfolio</span><span class="en">Back to portfolio</span></a> · <a href="https://www.linkedin.com/in/rafaelteixeira-sor" target="_blank" rel="noopener">LinkedIn</a> · <a href="mailto:fr.di@hotmail.fr">fr.di@hotmail.fr</a>
+  </footer>
+</div>
+<script src="projet.js"></script>
+</body>
+</html>
